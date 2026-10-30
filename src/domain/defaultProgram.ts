@@ -1,7 +1,7 @@
 import type { Program, Weekday } from './types';
 
 /** Hæves når programmet ændres, så eksisterende installationer opdateres (se programUpdates.ts). */
-export const PROGRAM_REVISION = 2;
+export const PROGRAM_REVISION = 3;
 
 const EVERY_DAY: Weekday[] = [0, 1, 2, 3, 4, 5, 6];
 /** Seddel: "2–3 x ugentlig". Mandag, onsdag, fredag som udgangspunkt. */
@@ -41,8 +41,8 @@ export const DEFAULT_PROGRAM: Program = {
       id: 'stretch-chest',
       name: 'Brystræk med elastik (arm bagud)',
       category: 'stretch',
-      sets: 1,
-      holdSeconds: 120,
+      sets: 2,
+      holdSeconds: 45,
       perSide: true,
       restSeconds: 15,
       days: EVERY_DAY,
@@ -52,7 +52,7 @@ export const DEFAULT_PROGRAM: Program = {
         'Drej langsomt kroppen væk fra armen.',
         'Mærk strækket foran på skulder og bryst.',
       ],
-      needsConfirmation: false,
+      needsConfirmation: true,
     },
     {
       id: 'lower-traps',

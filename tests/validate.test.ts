@@ -68,11 +68,23 @@ describe('programopdateringer', () => {
     return state;
   };
 
-  it('opdaterer uændrede stræk til 2 minutter', () => {
+  it('opdaterer uændret overhead-stræk til 2 minutter og lader bryststræk være', () => {
     const state = parseState(JSON.parse(JSON.stringify(legacy())));
-    const stretch = state.program.exercises.find((e) => e.id === 'stretch-overhead')!;
-    expect(stretch).toMatchObject({ sets: 1, holdSeconds: 120, needsConfirmation: false });
-    expect(state.programRevision).toBe(2);
+    const byId = (id: string) => state.program.exercises.find((e) => e.id === id)!;
+    expect(byId('stretch-overhead')).toMatchObject({ sets: 1, holdSeconds: 120, needsConfirmation: false });
+    expect(byId('stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 45, needsConfirmation: true });
+    expect(state.programRevision).toBe(3);
+  });
+
+  it('retter bryststræk tilbage på installationer der fik revision 2', () => {
+    const raw = legacy();
+    raw.programRevision = 2;
+    for (const e of raw.program.exercises) {
+      if (String(e.id).startsWith('stretch-')) Object.assign(e, { sets: 1, holdSeconds: 120, needsConfirmation: false });
+    }
+    const state = parseState(JSON.parse(JSON.stringify(raw)));
+    expect(state.program.exercises.find((e) => e.id === 'stretch-overhead')).toMatchObject({ sets: 1, holdSeconds: 120 });
+    expect(state.program.exercises.find((e) => e.id === 'stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 45, needsConfirmation: true });
   });
 
   it('bevarer øvelser brugeren selv har ændret', () => {
