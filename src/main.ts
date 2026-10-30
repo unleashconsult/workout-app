@@ -4,6 +4,7 @@ import type { ViewContext } from './ui/context';
 import { dayView } from './ui/dayView';
 import { h, toast } from './ui/dom';
 import { historyView } from './ui/historyView';
+import { icon } from './ui/icons';
 import { exerciseView, newExerciseView, programView } from './ui/programView';
 import { settingsView } from './ui/settingsView';
 import { Timer } from './ui/timer';
@@ -18,10 +19,10 @@ const timer = new Timer(timerHost, () => store.get().settings.soundEnabled);
 let cleanups: Array<() => void> = [];
 
 const TABS = [
-  { path: '/', label: 'I dag', icon: '✓' },
-  { path: '/history', label: 'Overblik', icon: '▦' },
-  { path: '/program', label: 'Program', icon: '☰' },
-  { path: '/settings', label: 'Indstillinger', icon: '⚙' },
+  { path: '/', label: 'I dag', icon: 'today' },
+  { path: '/history', label: 'Overblik', icon: 'history' },
+  { path: '/program', label: 'Program', icon: 'program' },
+  { path: '/settings', label: 'Indstillinger', icon: 'settings' },
 ] as const;
 
 function currentPath(): string {
@@ -99,7 +100,7 @@ function render(): void {
 const nav = h(
   'nav',
   { class: 'tabbar', 'aria-label': 'Hovedmenu' },
-  TABS.map((t) => h('a', { href: `#${t.path}`, 'data-path': t.path }, h('span', { class: 'tab-icon', 'aria-hidden': 'true' }, t.icon), h('span', null, t.label))),
+  TABS.map((t) => h('a', { href: `#${t.path}`, 'data-path': t.path }, icon(t.icon, 'tab-icon'), h('span', null, t.label))),
 );
 
 app.replaceChildren(viewHost, timerHost, h('div', { id: 'toasts', 'aria-live': 'polite' }), nav);

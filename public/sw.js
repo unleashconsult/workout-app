@@ -1,6 +1,6 @@
 /* Offline-understøttelse. HTML hentes netværk-først (så opdateringer slår igennem),
    øvrige filer har hash i navnet og serveres cache-først. */
-const CACHE = 'skulder-v1';
+const CACHE = 'skulder-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', './manifest.webmanifest'])));
