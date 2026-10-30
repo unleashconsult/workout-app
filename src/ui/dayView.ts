@@ -5,6 +5,7 @@ import {
   describeDose,
   doneUnits,
   exercisesForDate,
+  formatHold,
   toggleUnit,
   unitLabel,
   unitsFor,
@@ -183,7 +184,7 @@ function exerciseCard(
       ? h(
           'button',
           { class: 'btn btn-secondary btn-block', type: 'button', onclick: () => startHold(exercise) },
-          `▶ Start ${exercise.holdSeconds} sek · ${unitText(exercise, done)}`,
+          `▶ Start ${formatHold(exercise.holdSeconds)} · ${unitText(exercise, done)}`,
         )
       : null,
   );

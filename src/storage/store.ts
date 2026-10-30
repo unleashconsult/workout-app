@@ -25,6 +25,8 @@ export class Store {
     }
     try {
       this.state = parseState(JSON.parse(raw));
+      // Gem straks, så migreringer og programopdateringer kun køres én gang.
+      this.persist();
     } catch (err) {
       this.loadError = err instanceof Error ? err.message : String(err);
       try {

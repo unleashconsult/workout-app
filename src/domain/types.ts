@@ -53,6 +53,8 @@ export interface AppState {
   schemaVersion: typeof SCHEMA_VERSION;
   /** Første dag i forløbet ("YYYY-MM-DD"). Dage før tæller ikke med i statistik. */
   startedOn: string;
+  /** Hvilken udgave af trænerens program der er anvendt. Bruges til at opdatere uændrede øvelser. */
+  programRevision: number;
   program: Program;
   /** Nøgle: "YYYY-MM-DD" i lokal tid. */
   log: Record<string, DayLog>;
