@@ -18,28 +18,34 @@ export function programView(ctx: ViewContext): HTMLElement {
       h('h2', { class: 'card-title' }, 'Principper'),
       h('ol', { class: 'principles' }, program.principles.map((p) => h('li', null, p))),
     ),
+    exerciseGroup(ctx, '1 · Stræk', 'Først, hver gang', program.exercises.filter((e) => e.category === 'stretch')),
+    exerciseGroup(ctx, '2 · Styrke', 'Efter strækket', program.exercises.filter((e) => e.category === 'strength')),
+    h('button', { class: 'btn btn-secondary btn-block', type: 'button', onclick: () => ctx.navigate('/exercise/new') }, '+ Tilføj øvelse'),
+  );
+}
+
+function exerciseGroup(ctx: ViewContext, title: string, subtitle: string, exercises: Exercise[]): HTMLElement | null {
+  if (exercises.length === 0) return null;
+  return h(
+    'section',
+    { class: 'section' },
+    h('div', { class: 'section-head' }, h('h2', null, title), h('span', { class: 'muted' }, subtitle)),
     h(
-      'section',
-      { class: 'section' },
-      h('div', { class: 'section-head' }, h('h2', null, 'Øvelser')),
-      h(
-        'div',
-        { class: 'card list' },
-        program.exercises.map((e) =>
+      'div',
+      { class: 'card list' },
+      exercises.map((e) =>
+        h(
+          'button',
+          { class: 'list-item list-item-row', type: 'button', onclick: () => ctx.navigate(`/exercise/${e.id}`) },
           h(
-            'button',
-            { class: 'list-item list-item-row', type: 'button', onclick: () => ctx.navigate(`/exercise/${e.id}`) },
-            h(
-              'div',
-              null,
-              h('div', { class: 'list-title' }, e.name),
-              h('div', { class: 'muted' }, `${describeDose(e)} · ${formatDays(e.days)}`),
-            ),
-            h('span', { class: 'chevron', 'aria-hidden': 'true' }, '›'),
+            'div',
+            null,
+            h('div', { class: 'list-title' }, e.name),
+            h('div', { class: 'muted' }, `${describeDose(e)} · ${formatDays(e.days)}`),
           ),
+          h('span', { class: 'chevron', 'aria-hidden': 'true' }, '›'),
         ),
       ),
-      h('button', { class: 'btn btn-secondary btn-block', type: 'button', onclick: () => ctx.navigate('/exercise/new') }, '+ Tilføj øvelse'),
     ),
   );
 }
