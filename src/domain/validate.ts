@@ -1,4 +1,5 @@
-import { DEFAULT_PROGRAM } from './defaultProgram';
+import { DEFAULT_PROGRAM, PROGRAM_REVISION } from './defaultProgram';
+import { applyProgramUpdates } from './programUpdates';
 import { dateKey, isDateKey } from './dates';
 import { SCHEMA_VERSION, type AppState, type DayLog, type Exercise, type Program, type Settings, type Weekday } from './types';
 
@@ -21,6 +22,7 @@ export function createInitialState(today: Date = new Date()): AppState {
   return {
     schemaVersion: SCHEMA_VERSION,
     startedOn: dateKey(today),
+    programRevision: PROGRAM_REVISION,
     program: structuredClone(DEFAULT_PROGRAM),
     log: {},
     settings: { ...DEFAULT_SETTINGS },
@@ -121,11 +123,13 @@ export function parseState(input: unknown): AppState {
     typeof raw.startedOn === 'string' && isDateKey(raw.startedOn)
       ? raw.startedOn
       : (Object.keys(log).sort()[0] ?? dateKey(new Date()));
-  return {
+  const programRevision = isInt(raw.programRevision, 1, 1000) ? raw.programRevision : 1;
+  return applyProgramUpdates({
     schemaVersion: SCHEMA_VERSION,
     startedOn,
+    programRevision,
     program: parseProgram(raw.program),
     log,
     settings: parseSettings(raw.settings),
-  };
+  });
 }

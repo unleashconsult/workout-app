@@ -57,3 +57,28 @@ describe('Store', () => {
     expect(store.get()).toBe(before);
   });
 });
+
+describe('programopdateringer', () => {
+  const legacy = () => {
+    const state = createInitialState() as unknown as Record<string, unknown> & { program: { exercises: Array<Record<string, unknown>> } };
+    delete state.programRevision;
+    for (const e of state.program.exercises) {
+      if (String(e.id).startsWith('stretch-')) Object.assign(e, { sets: 2, holdSeconds: 45, needsConfirmation: true });
+    }
+    return state;
+  };
+
+  it('opdaterer uændrede stræk til 2 minutter', () => {
+    const state = parseState(JSON.parse(JSON.stringify(legacy())));
+    const stretch = state.program.exercises.find((e) => e.id === 'stretch-overhead')!;
+    expect(stretch).toMatchObject({ sets: 1, holdSeconds: 120, needsConfirmation: false });
+    expect(state.programRevision).toBe(2);
+  });
+
+  it('bevarer øvelser brugeren selv har ændret', () => {
+    const raw = legacy();
+    Object.assign(raw.program.exercises[0]!, { holdSeconds: 60 });
+    const state = parseState(JSON.parse(JSON.stringify(raw)));
+    expect(state.program.exercises[0]).toMatchObject({ sets: 2, holdSeconds: 60 });
+  });
+});

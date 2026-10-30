@@ -73,7 +73,7 @@ export function adherence(state: AppState, today: Date, days: number): number {
 export function describeDose(e: Exercise): string {
   const side = e.perSide ? ' pr. side' : '';
   if (e.category === 'stretch' && e.holdSeconds) {
-    return `${e.sets} × ${e.holdSeconds} sek${side}`;
+    return `${e.sets} × ${formatHold(e.holdSeconds)}${side}`;
   }
   const reps = e.reps ? (e.reps.min === e.reps.max ? `${e.reps.min}` : `${e.reps.min}–${e.reps.max}`) : '?';
   return `${e.sets} sæt × ${reps} reps${side}`;
@@ -83,4 +83,9 @@ export function describeDose(e: Exercise): string {
 export function unitLabel(e: Exercise, index: number): { set: number; side?: 'H' | 'V' } {
   if (!e.perSide) return { set: index + 1 };
   return { set: Math.floor(index / 2) + 1, side: index % 2 === 0 ? 'H' : 'V' };
+}
+
+/** 120 → "2 min", 90 → "90 sek". */
+export function formatHold(seconds: number): string {
+  return seconds >= 60 && seconds % 60 === 0 ? `${seconds / 60} min` : `${seconds} sek`;
 }

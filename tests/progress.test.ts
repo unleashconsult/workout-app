@@ -113,3 +113,11 @@ describe('startdato', () => {
     expect(adherence(state, MONDAY, 28)).toBe(1);
   });
 });
+
+describe('stræk', () => {
+  it('holdes 2 minutter pr. side', () => {
+    const e = createInitialState(START).program.exercises.find((x) => x.id === 'stretch-overhead')!;
+    expect(describeDose(e)).toBe('1 × 2 min pr. side');
+    expect(unitsFor(e)).toBe(2);
+  });
+});
