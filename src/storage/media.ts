@@ -8,6 +8,8 @@ export interface MediaItem {
   type: string;
   createdAt: number;
   blob: Blob;
+  /** Forhåndsbillede (JPEG) af videoens første billede. iOS viser ellers sort indtil afspilning. */
+  poster?: Blob;
 }
 
 const DB_NAME = 'skulder-genoptraening-media';
@@ -64,6 +66,7 @@ export async function addMedia(exerciseId: string, file: File): Promise<MediaIte
   if (file.size > MAX_BYTES) {
     throw new Error(`${file.name} er for stor (maks. ${MAX_BYTES / 1024 / 1024} MB).`);
   }
+  const poster = file.type.startsWith('video/') ? await createPoster(file) : null;
   const item: MediaItem = {
     id: crypto.randomUUID(),
     exerciseId,
@@ -71,10 +74,63 @@ export async function addMedia(exerciseId: string, file: File): Promise<MediaIte
     type: file.type,
     createdAt: Date.now(),
     blob: file,
+    ...(poster ? { poster } : {}),
   };
   await requestPersistence();
   await run('readwrite', (s) => s.put(item));
   return item;
+}
+
+/** Gemmer forhåndsbillede på en eksisterende video (bruges til videoer tilføjet før funktionen fandtes). */
+export async function savePoster(item: MediaItem, poster: Blob): Promise<void> {
+  await run('readwrite', (s) => s.put({ ...item, poster }));
+}
+
+const POSTER_MAX_WIDTH = 720;
+const POSTER_TIMEOUT_MS = 10_000;
+
+/** Tegner et billede fra starten af videoen til et JPEG. Returnerer null hvis det ikke lykkes. */
+export function createPoster(video: Blob): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(video);
+    const el = document.createElement('video');
+    let settled = false;
+    const finish = (result: Blob | null): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      el.removeAttribute('src');
+      el.load();
+      URL.revokeObjectURL(url);
+      resolve(result);
+    };
+    const timeout = setTimeout(() => finish(null), POSTER_TIMEOUT_MS);
+
+    el.muted = true;
+    el.playsInline = true;
+    el.preload = 'auto';
+    el.addEventListener('error', () => finish(null));
+    el.addEventListener('loadeddata', () => {
+      // Lidt inde i videoen undgår et sort første billede.
+      el.currentTime = Math.min(0.5, (el.duration || 1) / 4);
+    });
+    el.addEventListener('seeked', () => {
+      try {
+        const scale = Math.min(1, POSTER_MAX_WIDTH / (el.videoWidth || POSTER_MAX_WIDTH));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(el.videoWidth * scale);
+        canvas.height = Math.round(el.videoHeight * scale);
+        const ctx = canvas.getContext('2d');
+        if (!ctx || canvas.width === 0) return finish(null);
+        ctx.drawImage(el, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => finish(blob), 'image/jpeg', 0.8);
+      } catch {
+        finish(null);
+      }
+    });
+    el.src = url;
+    el.load();
+  });
 }
 
 export async function deleteMedia(id: string): Promise<void> {

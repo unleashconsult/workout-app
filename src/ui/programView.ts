@@ -2,7 +2,7 @@ import { DEFAULT_PROGRAM } from '../domain/defaultProgram';
 import { WEEKDAY_SHORT } from '../domain/dates';
 import { describeDose } from '../domain/progress';
 import type { Exercise, Weekday } from '../domain/types';
-import { addMedia, deleteMedia, listMedia } from '../storage/media';
+import { addMedia, createPoster, deleteMedia, listMedia, savePoster, type MediaItem } from '../storage/media';
 import type { ViewContext } from './context';
 import { h, toast } from './dom';
 
@@ -127,7 +127,7 @@ function mediaSection(ctx: ViewContext, exercise: Exercise): HTMLElement {
                 'figure',
                 { class: 'media' },
                 item.type.startsWith('video/')
-                  ? h('video', { src: url, controls: true, playsinline: true, preload: 'metadata', loop: true })
+                  ? videoElement(item, url, urls, () => disposed)
                   : h('img', { src: url, alt: exercise.name, loading: 'lazy' }),
                 h(
                   'button',
@@ -179,6 +179,30 @@ function mediaSection(ctx: ViewContext, exercise: Exercise): HTMLElement {
     h('button', { class: 'btn btn-secondary btn-block', type: 'button', onclick: () => input.click() }, '+ Tilføj video eller billede'),
     h('p', { class: 'muted small' }, 'Gemmes kun på denne telefon.'),
   );
+}
+
+function videoElement(item: MediaItem, url: string, urls: string[], isDisposed: () => boolean): HTMLVideoElement {
+  const video = h('video', { src: url, controls: true, playsinline: true, preload: 'metadata', loop: true });
+  const applyPoster = (poster: Blob): void => {
+    const posterUrl = URL.createObjectURL(poster);
+    urls.push(posterUrl);
+    video.poster = posterUrl;
+  };
+  if (item.poster) {
+    applyPoster(item.poster);
+  } else {
+    // Ældre videoer uden forhåndsbillede: lav det nu og gem det til næste gang.
+    void createPoster(item.blob).then(async (poster) => {
+      if (!poster) return;
+      if (!isDisposed()) applyPoster(poster);
+      try {
+        await savePoster(item, poster);
+      } catch {
+        /* vises stadig; gemmes igen næste gang */
+      }
+    });
+  }
+  return video;
 }
 
 function exerciseForm(ctx: ViewContext, exercise: Exercise, original: Exercise | undefined, isNew = false): HTMLElement {
