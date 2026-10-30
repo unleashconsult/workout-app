@@ -11,11 +11,19 @@ const STRETCH_IDS = new Set(['stretch-overhead', 'stretch-chest']);
 
 const UPDATES: ProgramUpdate[] = [
   {
-    // Stræk holdes 2 minutter pr. side (bekræftet), ikke 2 × 45 sek.
+    // Stræk holdes 2 minutter pr. side, ikke 2 × 45 sek.
     revision: 2,
     apply: (e) =>
       STRETCH_IDS.has(e.id) && e.sets === 2 && e.holdSeconds === 45 && e.perSide
         ? { ...e, sets: 1, holdSeconds: 120, needsConfirmation: false }
+        : null,
+  },
+  {
+    // Rettelse: kun overhead-strækket er 2 minutter. Bryststræk tilbage til 2 × 45 sek (ubekræftet).
+    revision: 3,
+    apply: (e) =>
+      e.id === 'stretch-chest' && e.sets === 1 && e.holdSeconds === 120 && e.perSide
+        ? { ...e, sets: 2, holdSeconds: 45, needsConfirmation: true }
         : null,
   },
 ];
