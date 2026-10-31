@@ -26,6 +26,12 @@ const UPDATES: ProgramUpdate[] = [
         ? { ...e, sets: 2, holdSeconds: 45, needsConfirmation: true }
         : null,
   },
+  {
+    // Bryststræk holdes 1 minut ad gangen. Antal gange er stadig ubekræftet.
+    revision: 4,
+    apply: (e) =>
+      e.id === 'stretch-chest' && e.sets === 2 && e.holdSeconds === 45 && e.perSide ? { ...e, holdSeconds: 60 } : null,
+  },
 ];
 
 export function applyProgramUpdates(state: AppState): AppState {

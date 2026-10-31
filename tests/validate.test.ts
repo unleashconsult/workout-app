@@ -72,8 +72,8 @@ describe('programopdateringer', () => {
     const state = parseState(JSON.parse(JSON.stringify(legacy())));
     const byId = (id: string) => state.program.exercises.find((e) => e.id === id)!;
     expect(byId('stretch-overhead')).toMatchObject({ sets: 1, holdSeconds: 120, needsConfirmation: false });
-    expect(byId('stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 45, needsConfirmation: true });
-    expect(state.programRevision).toBe(3);
+    expect(byId('stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 60, needsConfirmation: true });
+    expect(state.programRevision).toBe(4);
   });
 
   it('retter bryststræk tilbage på installationer der fik revision 2', () => {
@@ -84,7 +84,7 @@ describe('programopdateringer', () => {
     }
     const state = parseState(JSON.parse(JSON.stringify(raw)));
     expect(state.program.exercises.find((e) => e.id === 'stretch-overhead')).toMatchObject({ sets: 1, holdSeconds: 120 });
-    expect(state.program.exercises.find((e) => e.id === 'stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 45, needsConfirmation: true });
+    expect(state.program.exercises.find((e) => e.id === 'stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 60, needsConfirmation: true });
   });
 
   it('bevarer øvelser brugeren selv har ændret', () => {
