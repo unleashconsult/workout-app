@@ -32,6 +32,14 @@ const UPDATES: ProgramUpdate[] = [
     apply: (e) =>
       e.id === 'stretch-chest' && e.sets === 2 && e.holdSeconds === 45 && e.perSide ? { ...e, holdSeconds: 60 } : null,
   },
+  {
+    // Lower traps: 2–3 sæt (bekræftet). 2 sæt tæller som klaret, 3. sæt er valgfrit.
+    revision: 5,
+    apply: (e) =>
+      e.id === 'lower-traps' && e.sets === 3 && e.minSets === undefined
+        ? { ...e, minSets: 2, needsConfirmation: false }
+        : null,
+  },
 ];
 
 export function applyProgramUpdates(state: AppState): AppState {

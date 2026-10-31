@@ -31,11 +31,12 @@ export function createInitialState(today: Date = new Date()): AppState {
 
 function parseExercise(v: unknown, path: string): Exercise {
   if (!isObj(v)) fail(path);
-  const { id, name, category, sets, reps, holdSeconds, perSide, restSeconds, days, cues, needsConfirmation } = v;
+  const { id, name, category, sets, minSets, reps, holdSeconds, perSide, restSeconds, days, cues, needsConfirmation } = v;
   if (!isStr(id, 80) || id.length === 0) fail(`${path}.id`);
   if (!isStr(name, 120) || name.trim().length === 0) fail(`${path}.name`);
   if (category !== 'stretch' && category !== 'strength') fail(`${path}.category`);
   if (!isInt(sets, 1, 20)) fail(`${path}.sets`);
+  if (minSets !== undefined && !isInt(minSets, 1, sets)) fail(`${path}.minSets`);
   if (reps !== undefined && !(isObj(reps) && isInt(reps.min, 1, 200) && isInt(reps.max, reps.min as number, 200)))
     fail(`${path}.reps`);
   if (holdSeconds !== undefined && !isInt(holdSeconds, 1, 600)) fail(`${path}.holdSeconds`);
@@ -49,6 +50,7 @@ function parseExercise(v: unknown, path: string): Exercise {
     name,
     category,
     sets,
+    ...(minSets !== undefined && minSets < sets ? { minSets } : {}),
     ...(reps ? { reps: { min: (reps as Obj).min as number, max: (reps as Obj).max as number } } : {}),
     ...(holdSeconds !== undefined ? { holdSeconds } : {}),
     perSide,

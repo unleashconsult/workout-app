@@ -234,7 +234,8 @@ function exerciseForm(ctx: ViewContext, exercise: Exercise, original: Exercise |
           id: exercise.id,
           name: String(data.get('name') ?? '').trim(),
           category,
-          sets: n('sets'),
+          sets: Math.max(n('sets'), n('minSets')),
+          ...(n('minSets') < n('sets') ? { minSets: n('minSets') } : {}),
           perSide: data.get('perSide') === 'on',
           restSeconds: n('restSeconds'),
           days,
@@ -275,7 +276,8 @@ function exerciseForm(ctx: ViewContext, exercise: Exercise, original: Exercise |
     h(
       'div',
       { class: 'field-row' },
-      num('sets', 'Sæt', exercise.sets, 1, 20),
+      num('minSets', 'Sæt fra', exercise.minSets ?? exercise.sets, 1, 20),
+      num('sets', 'Sæt til', exercise.sets, 1, 20),
       num('restSeconds', 'Pause (sek)', exercise.restSeconds, 0, 900),
     ),
     h(

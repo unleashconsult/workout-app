@@ -121,3 +121,16 @@ describe('stræk', () => {
     expect(unitsFor(e)).toBe(2);
   });
 });
+
+describe('lower traps 2–3 sæt', () => {
+  it('vises som 2–3 sæt og er klaret efter 2', () => {
+    const state = createInitialState(START);
+    const e = state.program.exercises.find((x) => x.id === 'lower-traps')!;
+    expect(describeDose(e)).toBe('2–3 sæt × 10–12 reps');
+    state.log[dateKey(MONDAY)] = { done: { 'lower-traps': 2 } };
+    const twoSets = dayProgress(state, MONDAY).done;
+    expect(twoSets).toBe(2);
+    state.log[dateKey(MONDAY)] = { done: { 'lower-traps': 3 } };
+    expect(dayProgress(state, MONDAY).done).toBe(2);
+  });
+});

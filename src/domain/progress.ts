@@ -6,6 +6,11 @@ export function unitsFor(exercise: Exercise): number {
   return exercise.sets * (exercise.perSide ? 2 : 1);
 }
 
+/** Enheder der skal til for at øvelsen tæller som gennemført. */
+export function requiredUnitsFor(exercise: Exercise): number {
+  return (exercise.minSets ?? exercise.sets) * (exercise.perSide ? 2 : 1);
+}
+
 export function exercisesForDate(program: Program, date: Date): Exercise[] {
   const day = weekday(date);
   return program.exercises.filter((e) => e.days.includes(day));
@@ -35,8 +40,9 @@ export function dayProgress(state: AppState, date: Date): DayProgress {
   const key = dateKey(date);
   const log = state.log[key];
   const exercises = key < state.startedOn ? [] : exercisesForDate(state.program, date);
-  const planned = exercises.reduce((sum, e) => sum + unitsFor(e), 0);
-  const done = exercises.reduce((sum, e) => sum + doneUnits(log, e), 0);
+  // Valgfrie ekstra sæt tæller ikke med, så "2–3 sæt" er klaret efter 2.
+  const planned = exercises.reduce((sum, e) => sum + requiredUnitsFor(e), 0);
+  const done = exercises.reduce((sum, e) => sum + Math.min(doneUnits(log, e), requiredUnitsFor(e)), 0);
   const ratio = planned === 0 ? 1 : done / planned;
   return { planned, done, ratio, complete: planned > 0 && done >= planned };
 }
@@ -76,7 +82,8 @@ export function describeDose(e: Exercise): string {
     return `${e.sets} × ${formatHold(e.holdSeconds)}${side}`;
   }
   const reps = e.reps ? (e.reps.min === e.reps.max ? `${e.reps.min}` : `${e.reps.min}–${e.reps.max}`) : '?';
-  return `${e.sets} sæt × ${reps} reps${side}`;
+  const sets = e.minSets !== undefined && e.minSets < e.sets ? `${e.minSets}–${e.sets}` : `${e.sets}`;
+  return `${sets} sæt × ${reps} reps${side}`;
 }
 
 /** Etiket for enhed nr. index, fx "Sæt 2 · H". */

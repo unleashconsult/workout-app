@@ -12,7 +12,10 @@ export interface Exercise {
   id: string;
   name: string;
   category: Category;
+  /** Maks. antal sæt. */
   sets: number;
+  /** Mindste antal sæt der tæller som gennemført (fx "2–3 sæt"). Udeladt = sets. */
+  minSets?: number;
   /** Gentagelser pr. sæt (styrke). */
   reps?: RepRange;
   /** Holdetid pr. sæt i sekunder (stræk). */
