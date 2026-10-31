@@ -1,7 +1,7 @@
 import type { Program, Weekday } from './types';
 
 /** Hæves når programmet ændres, så eksisterende installationer opdateres (se programUpdates.ts). */
-export const PROGRAM_REVISION = 4;
+export const PROGRAM_REVISION = 5;
 
 const EVERY_DAY: Weekday[] = [0, 1, 2, 3, 4, 5, 6];
 /** Seddel: "2–3 x ugentlig". Mandag, onsdag, fredag som udgangspunkt. */
@@ -59,6 +59,7 @@ export const DEFAULT_PROGRAM: Program = {
       name: 'Lower traps',
       category: 'strength',
       sets: 3,
+      minSets: 2,
       reps: { min: 10, max: 12 },
       perSide: false,
       restSeconds: 120,
@@ -69,7 +70,7 @@ export const DEFAULT_PROGRAM: Program = {
         'Hold 1–2 sek. i bund. Langsomt tilbage.',
         'Ingen løft af skuldrene mod ørerne.',
       ],
-      needsConfirmation: true,
+      needsConfirmation: false,
     },
     {
       id: 'rotator-cuff-er',

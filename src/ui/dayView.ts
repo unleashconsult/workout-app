@@ -6,6 +6,7 @@ import {
   doneUnits,
   exercisesForDate,
   formatHold,
+  requiredUnitsFor,
   toggleUnit,
   unitLabel,
   unitsFor,
@@ -137,8 +138,9 @@ function exerciseCard(
   disabled: boolean,
 ): HTMLElement {
   const total = unitsFor(exercise);
+  const required = requiredUnitsFor(exercise);
   const done = doneUnits(log, exercise);
-  const complete = done >= total;
+  const complete = done >= required;
 
   const units = Array.from({ length: total }, (_, i) => {
     const u = unitLabel(exercise, i);
@@ -146,7 +148,7 @@ function exerciseCard(
     return h(
       'button',
       {
-        class: `unit${checked ? ' unit-done' : ''}${i === done ? ' unit-next' : ''}`,
+        class: `unit${checked ? ' unit-done' : ''}${i === done ? ' unit-next' : ''}${i >= required ? ' unit-optional' : ''}`,
         type: 'button',
         role: 'checkbox',
         'aria-checked': checked ? 'true' : 'false',
@@ -173,7 +175,7 @@ function exerciseCard(
           'p',
           { class: 'muted' },
           describeDose(exercise),
-          exercise.restSeconds > 0 ? ` · ${exercise.restSeconds} sek pause` : '',
+          exercise.restSeconds > 0 ? ` · ${formatHold(exercise.restSeconds)} pause` : '',
         ),
       ),
       h('span', { class: 'chevron', 'aria-hidden': 'true' }, 'ⓘ'),

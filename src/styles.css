@@ -135,6 +135,7 @@ p { margin: 0; }
 .unit:active { transform: scale(0.94); }
 .unit:disabled { opacity: 0.5; }
 .unit-next { border-color: var(--accent); }
+.unit-optional:not(.unit-done) { border-style: dashed; opacity: 0.75; }
 .unit-done { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 .unit-side {
   position: absolute; top: 2px; right: 5px; font-size: 10px; font-weight: 700; color: var(--muted);

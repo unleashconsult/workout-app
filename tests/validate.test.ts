@@ -73,7 +73,7 @@ describe('programopdateringer', () => {
     const byId = (id: string) => state.program.exercises.find((e) => e.id === id)!;
     expect(byId('stretch-overhead')).toMatchObject({ sets: 1, holdSeconds: 120, needsConfirmation: false });
     expect(byId('stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 60, needsConfirmation: true });
-    expect(state.programRevision).toBe(4);
+    expect(state.programRevision).toBe(5);
   });
 
   it('retter bryststræk tilbage på installationer der fik revision 2', () => {
@@ -92,5 +92,23 @@ describe('programopdateringer', () => {
     Object.assign(raw.program.exercises[0]!, { holdSeconds: 60 });
     const state = parseState(JSON.parse(JSON.stringify(raw)));
     expect(state.program.exercises[0]).toMatchObject({ sets: 2, holdSeconds: 60 });
+  });
+});
+
+describe('lower traps opdatering', () => {
+  it('får 2–3 sæt på eksisterende installationer', () => {
+    const raw = createInitialState() as unknown as Record<string, unknown> & { program: { exercises: Array<Record<string, unknown>> } };
+    raw.programRevision = 4;
+    const lt = raw.program.exercises.find((e) => e.id === 'lower-traps')!;
+    delete lt.minSets;
+    lt.needsConfirmation = true;
+    const state = parseState(JSON.parse(JSON.stringify(raw)));
+    expect(state.program.exercises.find((e) => e.id === 'lower-traps')).toMatchObject({ sets: 3, minSets: 2, needsConfirmation: false });
+  });
+
+  it('afviser minSets større end sets', () => {
+    const raw = createInitialState() as unknown as { program: { exercises: Array<Record<string, unknown>> } };
+    raw.program.exercises[2]!.minSets = 5;
+    expect(() => parseState(raw)).toThrow(ValidationError);
   });
 });
