@@ -16,7 +16,7 @@ function fail(path: string): never {
   throw new ValidationError(`Ugyldige data: ${path}`);
 }
 
-export const DEFAULT_SETTINGS: Settings = { reminderTime: '18:00', soundEnabled: true };
+export const DEFAULT_SETTINGS: Settings = { reminderTime: '18:00', soundEnabled: true, keepScreenOn: true };
 
 export function createInitialState(today: Date = new Date()): AppState {
   return {
@@ -99,7 +99,8 @@ function parseSettings(v: unknown): Settings {
       ? v.reminderTime
       : DEFAULT_SETTINGS.reminderTime;
   const soundEnabled = typeof v.soundEnabled === 'boolean' ? v.soundEnabled : DEFAULT_SETTINGS.soundEnabled;
-  return { reminderTime, soundEnabled };
+  const keepScreenOn = typeof v.keepScreenOn === 'boolean' ? v.keepScreenOn : DEFAULT_SETTINGS.keepScreenOn;
+  return { reminderTime, soundEnabled, keepScreenOn };
 }
 
 /** Migrerer ældre skemaversioner. Udvides når SCHEMA_VERSION hæves. */
