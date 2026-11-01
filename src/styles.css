@@ -279,6 +279,15 @@ details.edit summary::-webkit-details-marker { display: none; }
 
 .empty { text-align: center; }
 
+body.timer-flash::after {
+  content: ''; position: fixed; inset: 0; z-index: 50; pointer-events: none;
+  background: var(--brand); animation: timer-flash 1.6s ease-out forwards;
+}
+@keyframes timer-flash {
+  0%, 30%, 60% { opacity: 0.55; }
+  15%, 45%, 100% { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
