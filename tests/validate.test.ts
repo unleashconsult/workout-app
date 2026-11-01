@@ -73,7 +73,7 @@ describe('programopdateringer', () => {
     const byId = (id: string) => state.program.exercises.find((e) => e.id === id)!;
     expect(byId('stretch-overhead')).toMatchObject({ sets: 1, holdSeconds: 120, needsConfirmation: false });
     expect(byId('stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 60, needsConfirmation: true });
-    expect(state.programRevision).toBe(5);
+    expect(state.programRevision).toBe(6);
   });
 
   it('retter bryststræk tilbage på installationer der fik revision 2', () => {
@@ -110,5 +110,15 @@ describe('lower traps opdatering', () => {
     const raw = createInitialState() as unknown as { program: { exercises: Array<Record<string, unknown>> } };
     raw.program.exercises[2]!.minSets = 5;
     expect(() => parseState(raw)).toThrow(ValidationError);
+  });
+});
+
+describe('stræk-dage opdatering', () => {
+  it('flytter stræk fra hver dag til man, ons, fre', () => {
+    const raw = createInitialState() as unknown as Record<string, unknown> & { program: { exercises: Array<Record<string, unknown>> } };
+    raw.programRevision = 5;
+    for (const e of raw.program.exercises) if (String(e.id).startsWith('stretch-')) e.days = [0, 1, 2, 3, 4, 5, 6];
+    const state = parseState(JSON.parse(JSON.stringify(raw)));
+    for (const e of state.program.exercises) expect(e.days).toEqual([0, 2, 4]);
   });
 });

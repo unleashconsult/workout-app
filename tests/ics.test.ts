@@ -1,13 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { buildIcs, escapeText, foldLine, reminderGroups } from '../src/domain/ics';
 import { createInitialState } from '../src/domain/validate';
+import type { Weekday } from '../src/domain/types';
 
 const now = new Date(2026, 9, 30, 12, 0); // fredag
 
 describe('kalenderpåmindelser', () => {
-  const { program } = createInitialState();
+  const base = createInitialState().program;
+  // Testprogram med stræk hver dag, så grupperingen afprøves med to grupper.
+  const program = {
+    ...base,
+    exercises: base.exercises.map((e) => (e.category === 'stretch' ? { ...e, days: [0, 1, 2, 3, 4, 5, 6] as Weekday[] } : e)),
+  };
 
-  it('grupperer styrkedage og strækdage hver for sig', () => {
+  it('standardprogrammet giver én påmindelse man, ons, fre', () => {
+    expect(reminderGroups(base).map((g) => g.days)).toEqual([[0, 2, 4]]);
+  });
+
+  it('grupperer dage med samme øvelser', () => {
     const groups = reminderGroups(program);
     expect(groups.map((g) => g.days)).toEqual([[0, 2, 4], [1, 3, 5, 6]]);
   });

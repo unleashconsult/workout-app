@@ -1,11 +1,10 @@
 import type { Program, Weekday } from './types';
 
 /** Hæves når programmet ændres, så eksisterende installationer opdateres (se programUpdates.ts). */
-export const PROGRAM_REVISION = 5;
+export const PROGRAM_REVISION = 6;
 
-const EVERY_DAY: Weekday[] = [0, 1, 2, 3, 4, 5, 6];
-/** Seddel: "2–3 x ugentlig". Mandag, onsdag, fredag som udgangspunkt. */
-const STRENGTH_DAYS: Weekday[] = [0, 2, 4];
+/** Seddel: "2–3 x ugentlig". Gælder både stræk og styrke. Mandag, onsdag, fredag som udgangspunkt. */
+const TRAINING_DAYS: Weekday[] = [0, 2, 4];
 
 /**
  * Programmet fra Coach Nickys håndskrevne seddel, billeder og videoer.
@@ -28,7 +27,7 @@ export const DEFAULT_PROGRAM: Program = {
       holdSeconds: 120,
       perSide: true,
       restSeconds: 15,
-      days: EVERY_DAY,
+      days: TRAINING_DAYS,
       cues: [
         'Halv knæstående. Elastikken fastgjort højt foran dig.',
         'Strak arm op og frem, lad elastikken trække armen.',
@@ -45,7 +44,7 @@ export const DEFAULT_PROGRAM: Program = {
       holdSeconds: 60,
       perSide: true,
       restSeconds: 15,
-      days: EVERY_DAY,
+      days: TRAINING_DAYS,
       cues: [
         'Elastikken fastgjort i hoftehøjde bag dig.',
         'Strak arm ud til siden og let bagud, håndfladen frem.',
@@ -63,7 +62,7 @@ export const DEFAULT_PROGRAM: Program = {
       reps: { min: 10, max: 12 },
       perSide: false,
       restSeconds: 120,
-      days: STRENGTH_DAYS,
+      days: TRAINING_DAYS,
       cues: [
         'Hænderne bag hovedet, albuerne ud til siden.',
         'Træk skulderbladene ned og sammen, mod baglommerne.',
@@ -80,7 +79,7 @@ export const DEFAULT_PROGRAM: Program = {
       reps: { min: 8, max: 8 },
       perSide: true,
       restSeconds: 90,
-      days: STRENGTH_DAYS,
+      days: TRAINING_DAYS,
       cues: [
         'Elastikken fastgjort i albuehøjde ved siden af dig.',
         'Albuen ind til siden, underarmen vandret, 90° i albuen.',

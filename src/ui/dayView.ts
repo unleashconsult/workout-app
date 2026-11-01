@@ -99,7 +99,12 @@ export function dayView(ctx: ViewContext, key?: string): HTMLElement {
       !isToday ? h('button', { class: 'btn btn-ghost btn-block', type: 'button', onclick: () => ctx.navigate('/') }, 'Gå til i dag') : null,
     ),
     exercises.length === 0
-      ? h('section', { class: 'card empty' }, h('h2', null, 'Ingen øvelser'), h('p', { class: 'muted' }, 'Der er ikke planlagt øvelser denne dag.'))
+      ? h(
+          'section',
+          { class: 'card empty' },
+          h('h2', null, 'Hviledag'),
+          h('p', { class: 'muted' }, 'Ingen planlagte øvelser. Laver du noget alligevel, så brug Ekstra træning nedenfor.'),
+        )
       : null,
     section('1 · Stræk først', 'Stræk det væv der binder', stretches, log, onUnit, startHold, ctx, isFuture),
     section('2 · Styrke', '2–3 gange om ugen', strength, log, onUnit, startHold, ctx, isFuture),
