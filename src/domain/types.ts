@@ -48,6 +48,8 @@ export interface Settings {
   /** "HH:MM", lokal tid. */
   reminderTime: string;
   soundEnabled: boolean;
+  /** Hold skærmen tændt mens appen er åben. */
+  keepScreenOn: boolean;
 }
 
 export const SCHEMA_VERSION = 1;

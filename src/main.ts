@@ -8,6 +8,7 @@ import { icon } from './ui/icons';
 import { exerciseView, newExerciseView, programView } from './ui/programView';
 import { settingsView } from './ui/settingsView';
 import { Timer } from './ui/timer';
+import { ScreenWakeLock } from './ui/wakeLock';
 import { isDateKey } from './domain/dates';
 
 const store = new Store();
@@ -15,6 +16,7 @@ const app = document.getElementById('app')!;
 const viewHost = h('div', { id: 'view-host' });
 const timerHost = h('div', { id: 'timer', hidden: true });
 const timer = new Timer(timerHost, () => store.get().settings.soundEnabled);
+const wakeLock = new ScreenWakeLock(() => store.get().settings.keepScreenOn);
 
 let cleanups: Array<() => void> = [];
 
@@ -107,6 +109,7 @@ app.replaceChildren(viewHost, timerHost, h('div', { id: 'toasts', 'aria-live': '
 
 store.subscribe(() => {
   render();
+  void wakeLock.sync();
   if (store.persistError) toast(`Kunne ikke gemme: ${store.persistError}`, 'error');
 });
 window.addEventListener('hashchange', render);
@@ -123,6 +126,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 render();
+void wakeLock.sync();
 
 if (store.loadError) {
   toast(`Gemte data kunne ikke læses og er gemt til side. (${store.loadError})`, 'error');

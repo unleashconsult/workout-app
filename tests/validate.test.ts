@@ -28,7 +28,7 @@ describe('validering', () => {
 
   it('retter ugyldige indstillinger til standard', () => {
     const state = parseState({ ...createInitialState(), settings: { reminderTime: '25:99', soundEnabled: 'ja' } });
-    expect(state.settings).toEqual({ reminderTime: '18:00', soundEnabled: true });
+    expect(state.settings).toEqual({ reminderTime: '18:00', soundEnabled: true, keepScreenOn: true });
   });
 });
 

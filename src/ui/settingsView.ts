@@ -4,6 +4,7 @@ import { createInitialState, parseState } from '../domain/validate';
 import type { ViewContext } from './context';
 import { downloadBlob, h, saveFile, toast } from './dom';
 import { formatDays } from './programView';
+import { ScreenWakeLock } from './wakeLock';
 
 export function isStandalone(): boolean {
   return (
@@ -115,6 +116,32 @@ export function settingsView(ctx: ViewContext): HTMLElement {
         'Bip når pause eller stræk er slut',
       ),
       h('p', { class: 'muted small' }, 'Lydløs-knappen på telefonen skal være slået fra.'),
+    ),
+    h(
+      'section',
+      { class: 'card' },
+      h('h2', { class: 'card-title' }, 'Skærm'),
+      h(
+        'label',
+        { class: 'check' },
+        h('input', {
+          type: 'checkbox',
+          checked: state.settings.keepScreenOn,
+          disabled: !ScreenWakeLock.supported,
+          onchange: (ev: Event) => {
+            const on = (ev.target as HTMLInputElement).checked;
+            ctx.store.update((s) => void (s.settings.keepScreenOn = on));
+          },
+        }),
+        'Hold skærmen tændt mens appen er åben',
+      ),
+      h(
+        'p',
+        { class: 'muted small' },
+        ScreenWakeLock.supported
+          ? 'Virker ikke i strømsparetilstand.'
+          : 'Understøttes ikke på denne enhed. Opdatér iOS for at bruge det.',
+      ),
     ),
     h(
       'section',
