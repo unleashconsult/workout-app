@@ -34,6 +34,11 @@ export interface Program {
   coach: string;
   principles: string[];
   exercises: Exercise[];
+  /**
+   * Ugemål: antal træninger pr. uge (man–søn) uanset dag. Når sat, er alle øvelser tilgængelige hver dag,
+   * og øvelsernes `days` bruges ikke.
+   */
+  timesPerWeek?: number;
 }
 
 export interface DayLog {
@@ -45,8 +50,6 @@ export interface DayLog {
 }
 
 export interface Settings {
-  /** "HH:MM", lokal tid. */
-  reminderTime: string;
   soundEnabled: boolean;
   /** Hold skærmen tændt mens appen er åben. */
   keepScreenOn: boolean;

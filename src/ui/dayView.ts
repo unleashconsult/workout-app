@@ -6,11 +6,15 @@ import {
   doneUnits,
   exercisesForDate,
   formatHold,
+  isWeeklyMode,
   requiredUnitsFor,
   toggleUnit,
   unitLabel,
   unitsFor,
+  weekStatus,
+  weekStreak,
 } from '../domain/progress';
+import type { DayProgress, WeekStatus } from '../domain/progress';
 import type { DayLog, Exercise } from '../domain/types';
 import type { ViewContext } from './context';
 import { h, ring } from './dom';
@@ -25,7 +29,9 @@ export function dayView(ctx: ViewContext, key?: string): HTMLElement {
   const log = state.log[dk];
   const exercises = exercisesForDate(state.program, date);
   const progress = dayProgress(state, date);
-  const streak = currentStreak(state, today);
+  const weekly = isWeeklyMode(state.program);
+  const streak = weekly ? weekStreak(state, today) : currentStreak(state, today);
+  const week = weekStatus(state, date);
 
   const setDone = (exercise: Exercise, value: number): void => {
     ctx.store.update((s) => {
@@ -85,17 +91,7 @@ export function dayView(ctx: ViewContext, key?: string): HTMLElement {
         ),
         h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Næste dag', onclick: () => ctx.navigate(`/day/${dateKey(addDays(date, 1))}`) }, '›'),
       ),
-      h(
-        'div',
-        { class: 'summary card' },
-        h('div', { class: 'summary-ring' }, ring(progress.ratio, 64, 7), h('span', null, `${Math.round(progress.ratio * 100)}%`)),
-        h(
-          'div',
-          null,
-          h('div', { class: 'summary-main' }, progress.complete ? 'Alt er klaret 💪' : `${progress.done} af ${progress.planned} afkrydset`),
-          h('div', { class: 'muted' }, streak > 0 ? `${streak} ${streak === 1 ? 'dag' : 'dage'} i træk` : 'Start din stribe i dag'),
-        ),
-      ),
+      weekly ? weekSummary(week, progress, streak, isToday) : daySummary(progress, streak),
       !isToday ? h('button', { class: 'btn btn-ghost btn-block', type: 'button', onclick: () => ctx.navigate('/') }, 'Gå til i dag') : null,
     ),
     exercises.length === 0
@@ -133,6 +129,48 @@ function extraSection(
     ),
     h('p', { class: 'muted small' }, 'Lavet noget ekstra? Sæt flueben her. Det tæller ikke med i dagens procent.'),
     extras.map((e) => exerciseCard(e, log, onUnit, startHold, ctx, false)),
+  );
+}
+
+function daySummary(progress: DayProgress, streak: number): HTMLElement {
+  return h(
+    'div',
+    { class: 'summary card' },
+    h('div', { class: 'summary-ring' }, ring(progress.ratio, 64, 7), h('span', null, `${Math.round(progress.ratio * 100)}%`)),
+    h(
+      'div',
+      null,
+      h('div', { class: 'summary-main' }, progress.complete ? 'Alt er klaret 💪' : `${progress.done} af ${progress.planned} afkrydset`),
+      h('div', { class: 'muted' }, streak > 0 ? `${streak} ${streak === 1 ? 'dag' : 'dage'} i træk` : 'Start din stribe i dag'),
+    ),
+  );
+}
+
+/** Ugemål: ringen viser ugens træninger, teksten dagens fremdrift og hvad der mangler. */
+function weekSummary(week: WeekStatus, progress: DayProgress, streak: number, isToday: boolean): HTMLElement {
+  const missing = Math.max(0, week.target - week.sessions);
+  const nudge = week.reached
+    ? streak > 1
+      ? `Ugens mål er nået · ${streak} uger i træk 💪`
+      : 'Ugens mål er nået 💪'
+    : isToday
+      ? `Mangler ${missing} · ${week.daysLeft === 1 ? 'sidste dag i ugen' : `${week.daysLeft} dage tilbage`}`
+      : `Mangler ${missing} i den uge`;
+  return h(
+    'div',
+    { class: 'summary card' },
+    h(
+      'div',
+      { class: 'summary-ring' },
+      ring(Math.min(1, week.sessions / week.target), 64, 7),
+      h('span', null, `${week.sessions}/${week.target}`),
+    ),
+    h(
+      'div',
+      null,
+      h('div', { class: 'summary-main' }, progress.complete ? 'Dagens træning er klaret' : `${progress.done} af ${progress.planned} afkrydset`),
+      h('div', { class: `muted${!week.reached && isToday && week.daysLeft <= 2 ? ' nudge' : ''}` }, nudge),
+    ),
   );
 }
 

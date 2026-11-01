@@ -1,12 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, dateKey, isDateKey, weekday } from '../src/domain/dates';
-import { adherence, currentStreak, dayProgress, describeDose, exercisesForDate, toggleUnit, unitLabel, unitsFor } from '../src/domain/progress';
+import {
+  adherence,
+  currentStreak,
+  dayProgress,
+  describeDose,
+  exercisesForDate,
+  toggleUnit,
+  unitLabel,
+  unitsFor,
+  weekStatus,
+  weekStreak,
+  weeklyAdherence,
+} from '../src/domain/progress';
 import { createInitialState } from '../src/domain/validate';
 import type { AppState } from '../src/domain/types';
 
 const MONDAY = new Date(2026, 9, 26); // mandag 26. okt 2026
 const TUESDAY = addDays(MONDAY, 1);
 const START = addDays(MONDAY, -60);
+
+/** Programmet med faste dage (uden ugemål), til test af dagsbaseret logik. */
+function fixedDays(state: AppState): AppState {
+  delete state.program.timesPerWeek;
+  return state;
+}
 
 function completeDay(state: AppState, date: Date): void {
   const done: Record<string, number> = {};
@@ -44,9 +62,16 @@ describe('program fra Nickys seddel', () => {
     expect(e.days).toEqual([0, 2, 4]);
   });
 
-  it('stræk og styrke 3 gange om ugen, ingen øvelser på hviledage', () => {
+  it('ugemål på 3 træninger, alle øvelser tilgængelige hver dag', () => {
+    expect(state.program.timesPerWeek).toBe(3);
     expect(exercisesForDate(state.program, MONDAY)).toHaveLength(4);
-    expect(exercisesForDate(state.program, TUESDAY)).toHaveLength(0);
+    expect(exercisesForDate(state.program, TUESDAY)).toHaveLength(4);
+  });
+
+  it('med faste dage: man, ons, fre og hviledage imellem', () => {
+    const fixed = fixedDays(createInitialState(START));
+    expect(exercisesForDate(fixed.program, MONDAY)).toHaveLength(4);
+    expect(exercisesForDate(fixed.program, TUESDAY)).toHaveLength(0);
   });
 });
 
@@ -80,7 +105,7 @@ describe('fremskridt', () => {
   });
 
   it('stribe tæller fuldførte dage og bryder ikke på en igangværende dag', () => {
-    const state = createInitialState(START);
+    const state = fixedDays(createInitialState(START));
     // Fredag: man og ons klaret, fredag i gang. Hviledage springes over.
     const today = addDays(MONDAY, 4);
     completeDay(state, MONDAY);
@@ -91,7 +116,7 @@ describe('fremskridt', () => {
   });
 
   it('stribe brydes af en mistet dag', () => {
-    const state = createInitialState(START);
+    const state = fixedDays(createInitialState(START));
     // Fredag: onsdag klaret, mandag mistet.
     const today = addDays(MONDAY, 4);
     completeDay(state, addDays(MONDAY, 2));
@@ -134,5 +159,39 @@ describe('lower traps 2–3 sæt', () => {
     expect(twoSets).toBe(2);
     state.log[dateKey(MONDAY)] = { done: { 'lower-traps': 3 } };
     expect(dayProgress(state, MONDAY).done).toBe(2);
+  });
+});
+
+describe('ugemål', () => {
+  const SUNDAY = addDays(MONDAY, 6);
+
+  it('tæller træninger i ugen uanset dag', () => {
+    const state = createInitialState(START);
+    completeDay(state, TUESDAY);
+    completeDay(state, addDays(MONDAY, 5)); // lørdag
+    expect(weekStatus(state, SUNDAY)).toEqual({ sessions: 2, target: 3, reached: false, daysLeft: 1 });
+    completeDay(state, SUNDAY);
+    expect(weekStatus(state, SUNDAY).reached).toBe(true);
+  });
+
+  it('en delvis dag tæller ikke som træning', () => {
+    const state = createInitialState(START);
+    state.log[dateKey(MONDAY)] = { done: { 'lower-traps': 2 } };
+    expect(weekStatus(state, MONDAY).sessions).toBe(0);
+  });
+
+  it('uger i træk: igangværende uge bryder ikke rækken', () => {
+    const state = createInitialState(START);
+    for (const w of [1, 2]) for (const d of [0, 2, 4]) completeDay(state, addDays(MONDAY, d - 7 * w));
+    expect(weekStreak(state, MONDAY)).toBe(2);
+    for (const d of [0, 1, 2]) completeDay(state, addDays(MONDAY, d));
+    expect(weekStreak(state, addDays(MONDAY, 2))).toBe(3);
+  });
+
+  it('gennemførelse regnes kun på afsluttede uger efter start', () => {
+    const state = createInitialState(MONDAY);
+    expect(weeklyAdherence(state, addDays(MONDAY, 3), 4)).toBeNull();
+    for (const d of [0, 2]) completeDay(state, addDays(MONDAY, d));
+    expect(weeklyAdherence(state, addDays(MONDAY, 7), 4)).toBeCloseTo(2 / 3);
   });
 });

@@ -27,8 +27,8 @@ describe('validering', () => {
   });
 
   it('retter ugyldige indstillinger til standard', () => {
-    const state = parseState({ ...createInitialState(), settings: { reminderTime: '25:99', soundEnabled: 'ja' } });
-    expect(state.settings).toEqual({ reminderTime: '18:00', soundEnabled: true, keepScreenOn: true });
+    const state = parseState({ ...createInitialState(), settings: { reminderTime: '18:00', soundEnabled: 'ja' } });
+    expect(state.settings).toEqual({ soundEnabled: true, keepScreenOn: true });
   });
 });
 
@@ -73,7 +73,7 @@ describe('programopdateringer', () => {
     const byId = (id: string) => state.program.exercises.find((e) => e.id === id)!;
     expect(byId('stretch-overhead')).toMatchObject({ sets: 1, holdSeconds: 120, needsConfirmation: false });
     expect(byId('stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 60, needsConfirmation: true });
-    expect(state.programRevision).toBe(6);
+    expect(state.programRevision).toBe(7);
   });
 
   it('retter bryststræk tilbage på installationer der fik revision 2', () => {
@@ -120,5 +120,21 @@ describe('stræk-dage opdatering', () => {
     for (const e of raw.program.exercises) if (String(e.id).startsWith('stretch-')) e.days = [0, 1, 2, 3, 4, 5, 6];
     const state = parseState(JSON.parse(JSON.stringify(raw)));
     for (const e of state.program.exercises) expect(e.days).toEqual([0, 2, 4]);
+  });
+});
+
+describe('ugemål opdatering', () => {
+  it('giver eksisterende installationer 3 træninger om ugen', () => {
+    const raw = createInitialState() as unknown as Record<string, unknown> & { program: Record<string, unknown> };
+    raw.programRevision = 6;
+    delete raw.program.timesPerWeek;
+    const state = parseState(JSON.parse(JSON.stringify(raw)));
+    expect(state.program.timesPerWeek).toBe(3);
+  });
+
+  it('afviser ugyldigt ugemål', () => {
+    const raw = createInitialState() as unknown as { program: Record<string, unknown> };
+    raw.program.timesPerWeek = 9;
+    expect(() => parseState(raw)).toThrow(ValidationError);
   });
 });

@@ -1,4 +1,4 @@
-import { addDays, dateKey, weekday } from './dates';
+import { addDays, dateKey, parseDateKey, startOfWeek, weekday } from './dates';
 import type { AppState, DayLog, Exercise, Program } from './types';
 
 /** Antal afkrydsningsenheder: sæt × sider. */
@@ -11,7 +11,12 @@ export function requiredUnitsFor(exercise: Exercise): number {
   return (exercise.minSets ?? exercise.sets) * (exercise.perSide ? 2 : 1);
 }
 
+export function isWeeklyMode(program: Program): boolean {
+  return program.timesPerWeek !== undefined;
+}
+
 export function exercisesForDate(program: Program, date: Date): Exercise[] {
+  if (isWeeklyMode(program)) return program.exercises;
   const day = weekday(date);
   return program.exercises.filter((e) => e.days.includes(day));
 }
@@ -96,3 +101,57 @@ export function unitLabel(e: Exercise, index: number): { set: number; side?: 'H'
 export function formatHold(seconds: number): string {
   return seconds >= 60 && seconds % 60 === 0 ? `${seconds / 60} min` : `${seconds} sek`;
 }
+
+export interface WeekStatus {
+  /** Antal fuldførte træninger i ugen (man–søn). */
+  sessions: number;
+  target: number;
+  reached: boolean;
+  /** Dage tilbage af ugen inkl. i dag. */
+  daysLeft: number;
+}
+
+/** Træninger i den uge (man–søn) som `date` ligger i. En træning = en dag med hele programmet klaret. */
+export function weekStatus(state: AppState, date: Date): WeekStatus {
+  const monday = startOfWeek(date);
+  let sessions = 0;
+  for (let i = 0; i < 7; i++) {
+    if (dayProgress(state, addDays(monday, i)).complete) sessions++;
+  }
+  const target = state.program.timesPerWeek ?? 0;
+  return { sessions, target, reached: sessions >= target, daysLeft: 7 - weekday(date) };
+}
+
+/**
+ * Antal uger i træk hvor ugemålet er nået. Den igangværende uge tæller kun med hvis målet er nået,
+ * så en uge der ikke er slut endnu ikke bryder rækken. Uger før forløbet startede tæller ikke.
+ */
+export function weekStreak(state: AppState, today: Date, maxWeeks = 104): number {
+  const firstWeek = dateKey(startOfWeek(parseDateKey(state.startedOn)));
+  let streak = 0;
+  for (let w = 0; w < maxWeeks; w++) {
+    const monday = addDays(startOfWeek(today), -7 * w);
+    if (dateKey(monday) < firstWeek) break;
+    const status = weekStatus(state, monday);
+    if (status.reached) streak++;
+    else if (w === 0) continue;
+    else break;
+  }
+  return streak;
+}
+
+/** Andel af ugemålet nået i de seneste `weeks` afsluttede uger. Null hvis ingen uge er afsluttet endnu. */
+export function weeklyAdherence(state: AppState, today: Date, weeks: number): number | null {
+  const firstWeek = dateKey(startOfWeek(parseDateKey(state.startedOn)));
+  let target = 0;
+  let done = 0;
+  for (let w = 1; w <= weeks; w++) {
+    const monday = addDays(startOfWeek(today), -7 * w);
+    if (dateKey(monday) < firstWeek) break;
+    const status = weekStatus(state, monday);
+    target += status.target;
+    done += Math.min(status.sessions, status.target);
+  }
+  return target === 0 ? null : done / target;
+}
+

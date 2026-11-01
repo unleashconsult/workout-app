@@ -1,10 +1,12 @@
 import { PROGRAM_REVISION } from './defaultProgram';
-import type { AppState, Exercise } from './types';
+import type { AppState, Exercise, Program } from './types';
 
 interface ProgramUpdate {
   revision: number;
   /** Opdaterer kun øvelser brugeren ikke selv har ændret. */
-  apply(exercise: Exercise): Exercise | null;
+  apply?(exercise: Exercise): Exercise | null;
+  /** Opdatering af selve programmet. */
+  applyProgram?(program: Program): Program;
 }
 
 const STRETCH_IDS = new Set(['stretch-overhead', 'stretch-chest']);
@@ -45,14 +47,21 @@ const UPDATES: ProgramUpdate[] = [
     revision: 6,
     apply: (e) => (STRETCH_IDS.has(e.id) && e.days.length === 7 ? { ...e, days: [0, 2, 4] } : null),
   },
+  {
+    // Ugemål i stedet for faste dage: 3 træninger om ugen, uanset hvilke dage.
+    revision: 7,
+    applyProgram: (p) => (p.timesPerWeek === undefined ? { ...p, timesPerWeek: 3 } : p),
+  },
 ];
 
 export function applyProgramUpdates(state: AppState): AppState {
   if (state.programRevision >= PROGRAM_REVISION) return state;
-  let exercises = state.program.exercises;
+  let program = state.program;
   for (const update of UPDATES) {
     if (update.revision <= state.programRevision) continue;
-    exercises = exercises.map((e) => update.apply(e) ?? e);
+    const { apply, applyProgram } = update;
+    if (apply) program = { ...program, exercises: program.exercises.map((e) => apply(e) ?? e) };
+    if (applyProgram) program = applyProgram(program);
   }
-  return { ...state, programRevision: PROGRAM_REVISION, program: { ...state.program, exercises } };
+  return { ...state, programRevision: PROGRAM_REVISION, program };
 }

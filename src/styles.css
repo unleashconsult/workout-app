@@ -109,6 +109,7 @@ p { margin: 0; }
 .summary { flex-direction: row; align-items: center; gap: 16px; }
 .summary-ring { position: relative; width: 64px; height: 64px; flex: none; }
 .summary-ring span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; font-weight: 700; }
+.nudge { color: var(--warn); font-weight: 600; }
 .summary-main { font-size: 18px; font-weight: 650; }
 .ring-track { stroke: var(--surface-2); }
 .ring-bar { stroke: var(--success); transition: stroke-dashoffset 300ms ease; }
@@ -201,7 +202,11 @@ details.edit summary::-webkit-details-marker { display: none; }
 .list-item-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .list-title { font-weight: 600; }
 .principles, .cues { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
-.reminder-list { margin: 0; padding-left: 18px; }
+.target { flex-direction: row; align-items: center; justify-content: space-between; }
+.target-value { font-size: 20px; font-weight: 700; margin-top: 4px; }
+.stepper { display: flex; gap: 8px; }
+.stepper .icon-btn:disabled { opacity: 0.4; }
+.quote { font-weight: 600; border-left: 3px solid var(--brand); padding-left: 12px; }
 
 /* Medier */
 .media-grid { display: grid; gap: 12px; }
@@ -214,7 +219,10 @@ details.edit summary::-webkit-details-marker { display: none; }
 .stat-value { font-size: 22px; font-weight: 750; }
 .stat-label { font-size: 12px; }
 .week-row { display: grid; grid-template-columns: 44px repeat(7, 1fr); gap: 6px; align-items: center; }
+.week-row-weekly { grid-template-columns: 44px repeat(7, 1fr) 30px; }
 .week-head { font-size: 12px; text-align: center; }
+.week-count { font-size: 12px; font-weight: 700; text-align: center; color: var(--muted); }
+.week-reached { color: var(--accent); }
 .week-label { font-size: 11px; }
 .day-cell {
   aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2);
