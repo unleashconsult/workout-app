@@ -64,6 +64,8 @@ export function dayView(ctx: ViewContext, key?: string): HTMLElement {
 
   const stretches = exercises.filter((e) => e.category === 'stretch');
   const strength = exercises.filter((e) => e.category === 'strength');
+  // Øvelser der ikke er planlagt denne dag kan stadig logges (fx styrke på en ekstra dag).
+  const extras = state.program.exercises.filter((e) => !exercises.includes(e));
 
   return h(
     'main',
@@ -101,7 +103,31 @@ export function dayView(ctx: ViewContext, key?: string): HTMLElement {
       : null,
     section('1 · Stræk først', 'Stræk det væv der binder', stretches, log, onUnit, startHold, ctx, isFuture),
     section('2 · Styrke', '2–3 gange om ugen', strength, log, onUnit, startHold, ctx, isFuture),
+    !isFuture ? extraSection(extras, log, onUnit, startHold, ctx) : null,
     exercises.length > 0 && !isFuture ? checkIn(ctx, dk, log) : null,
+  );
+}
+
+function extraSection(
+  extras: Exercise[],
+  log: DayLog | undefined,
+  onUnit: (e: Exercise, i: number) => void,
+  startHold: (e: Exercise) => void,
+  ctx: ViewContext,
+): HTMLElement | null {
+  if (extras.length === 0) return null;
+  const anyDone = extras.some((e) => doneUnits(log, e) > 0);
+  return h(
+    'details',
+    { class: 'section extra', open: anyDone },
+    h(
+      'summary',
+      { class: 'section-head' },
+      h('h2', null, '+ Ekstra træning'),
+      h('span', { class: 'muted' }, 'Ikke planlagt i dag'),
+    ),
+    h('p', { class: 'muted small' }, 'Lavet noget ekstra? Sæt flueben her. Det tæller ikke med i dagens procent.'),
+    extras.map((e) => exerciseCard(e, log, onUnit, startHold, ctx, false)),
   );
 }
 
