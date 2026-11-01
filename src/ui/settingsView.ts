@@ -115,7 +115,7 @@ export function settingsView(ctx: ViewContext): HTMLElement {
         }),
         'Bip når pause eller stræk er slut',
       ),
-      h('p', { class: 'muted small' }, 'Lydløs-knappen på telefonen skal være slået fra.'),
+      h('p', { class: 'muted small' }, 'Lyden spiller også på lydløs (iOS 17 eller nyere). Skru op for medielyden.'),
     ),
     h(
       'section',

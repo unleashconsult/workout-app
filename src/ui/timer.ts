@@ -19,6 +19,8 @@ export class Timer {
   private active: ActiveTimer | null = null;
   private interval: number | undefined;
   private audio: AudioContext | null = null;
+  /** Lydløs tone der holder lydkanalen vågen under timeren, så iOS ikke suspenderer den. */
+  private keepAlive: OscillatorNode | null = null;
 
   constructor(
     private readonly host: HTMLElement,
@@ -30,6 +32,9 @@ export class Timer {
   /** Skal kaldes fra en brugerhandling, så iOS tillader lyd senere. */
   unlockAudio(): void {
     if (!this.soundEnabled()) return;
+    // iOS 17+: afspil som "medie", så lyden også høres når telefonen står på lydløs.
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (session) session.type = 'playback';
     try {
       const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
@@ -46,6 +51,7 @@ export class Timer {
       return;
     }
     this.unlockAudio();
+    this.startKeepAlive();
     this.active = { kind, label, total: seconds, endsAt: Date.now() + seconds * 1000, onDone };
     window.clearInterval(this.interval);
     this.interval = window.setInterval(() => this.tick(), 250);
@@ -55,7 +61,32 @@ export class Timer {
   stop(): void {
     window.clearInterval(this.interval);
     this.active = null;
+    this.stopKeepAlive();
     this.render();
+  }
+
+  private startKeepAlive(): void {
+    const ctx = this.audio;
+    if (!ctx || this.keepAlive) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.value = 0.0001;
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      this.keepAlive = osc;
+    } catch {
+      this.keepAlive = null;
+    }
+  }
+
+  private stopKeepAlive(): void {
+    try {
+      this.keepAlive?.stop();
+    } catch {
+      /* allerede stoppet */
+    }
+    this.keepAlive = null;
   }
 
   get isRunning(): boolean {
@@ -66,8 +97,10 @@ export class Timer {
     const active = this.active;
     if (!active) return;
     if (Date.now() >= active.endsAt) {
-      this.stop();
+      // Bip før keep-alive stoppes, så lydkanalen stadig er aktiv.
       this.beep(active.kind === 'hold' ? 2 : 3);
+      this.flash();
+      this.stop();
       active.onDone?.();
       return;
     }
@@ -102,26 +135,41 @@ export class Timer {
     );
   }
 
+  /** Kort blink på hele skærmen, så slut på timeren også ses uden lyd. */
+  private flash(): void {
+    document.body.classList.remove('timer-flash');
+    void document.body.offsetWidth;
+    document.body.classList.add('timer-flash');
+    window.setTimeout(() => document.body.classList.remove('timer-flash'), 1600);
+  }
+
   private beep(count: number): void {
     if (!this.soundEnabled()) return;
     try {
-      navigator.vibrate?.(200);
+      navigator.vibrate?.([200, 100, 200]);
     } catch {
       /* ikke understøttet på iOS */
     }
     const ctx = this.audio;
     if (!ctx) return;
-    const start = ctx.currentTime + 0.05;
-    for (let i = 0; i < count; i++) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.0001, start + i * 0.3);
-      gain.gain.exponentialRampToValueAtTime(0.4, start + i * 0.3 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + i * 0.3 + 0.2);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(start + i * 0.3);
-      osc.stop(start + i * 0.3 + 0.22);
-    }
+    const play = (): void => {
+      const start = ctx.currentTime + 0.05;
+      for (let i = 0; i < count; i++) {
+        const t = start + i * 0.35;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = 1000;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.6, t + 0.02);
+        gain.gain.setValueAtTime(0.6, t + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.28);
+      }
+    };
+    if (ctx.state === 'running') play();
+    else void ctx.resume().then(play, () => undefined);
   }
 }
