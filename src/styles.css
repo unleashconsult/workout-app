@@ -184,6 +184,11 @@ textarea.input { resize: vertical; }
 }
 .day-toggle input:checked + span { background: var(--accent); color: var(--on-accent); border-color: transparent; }
 .day-toggle input:focus-visible + span { outline: 2px solid var(--accent); }
+details.extra > summary { list-style: none; cursor: pointer; }
+details.extra > summary::-webkit-details-marker { display: none; }
+details.extra > summary h2 { color: var(--accent); }
+details.extra { display: block; }
+details.extra > * + * { margin-top: 10px; }
 details.edit summary { font-weight: 650; cursor: pointer; list-style: none; color: var(--accent); }
 details.edit summary::-webkit-details-marker { display: none; }
 
