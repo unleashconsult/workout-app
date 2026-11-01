@@ -18,10 +18,37 @@ export function programView(ctx: ViewContext): HTMLElement {
       h('h2', { class: 'card-title' }, 'Principper'),
       h('ol', { class: 'principles' }, program.principles.map((p) => h('li', null, p))),
     ),
+    program.timesPerWeek !== undefined ? weeklyTarget(ctx, program.timesPerWeek) : null,
     exerciseGroup(ctx, '1 · Stræk', 'Først, hver gang', program.exercises.filter((e) => e.category === 'stretch')),
     exerciseGroup(ctx, '2 · Styrke', 'Efter strækket', program.exercises.filter((e) => e.category === 'strength')),
     h('button', { class: 'btn btn-secondary btn-block', type: 'button', onclick: () => ctx.navigate('/exercise/new') }, '+ Tilføj øvelse'),
   );
+}
+
+function weeklyTarget(ctx: ViewContext, times: number): HTMLElement {
+  const set = (n: number): void => ctx.store.update((s) => void (s.program.timesPerWeek = Math.max(1, Math.min(7, n))));
+  return h(
+    'section',
+    { class: 'card target' },
+    h(
+      'div',
+      null,
+      h('h2', { class: 'card-title' }, 'Ugemål'),
+      h('div', { class: 'target-value' }, `${times} ${times === 1 ? 'gang' : 'gange'} om ugen`),
+      h('p', { class: 'muted small' }, 'Alle øvelser, valgfri dage. Holdtræning tæller med.'),
+    ),
+    h(
+      'div',
+      { class: 'stepper' },
+      h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Færre', disabled: times <= 1, onclick: () => set(times - 1) }, '−'),
+      h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Flere', disabled: times >= 7, onclick: () => set(times + 1) }, '+'),
+    ),
+  );
+}
+
+/** Dosering, og dage kun når programmet bruger faste dage. */
+function exerciseMeta(ctx: ViewContext, e: Exercise): string {
+  return ctx.store.get().program.timesPerWeek !== undefined ? describeDose(e) : `${describeDose(e)} · ${formatDays(e.days)}`;
 }
 
 function exerciseGroup(ctx: ViewContext, title: string, subtitle: string, exercises: Exercise[]): HTMLElement | null {
@@ -41,7 +68,7 @@ function exerciseGroup(ctx: ViewContext, title: string, subtitle: string, exerci
             'div',
             null,
             h('div', { class: 'list-title' }, e.name),
-            h('div', { class: 'muted' }, `${describeDose(e)} · ${formatDays(e.days)}`),
+            h('div', { class: 'muted' }, exerciseMeta(ctx, e)),
           ),
           h('span', { class: 'chevron', 'aria-hidden': 'true' }, '›'),
         ),
@@ -67,7 +94,7 @@ export function exerciseView(ctx: ViewContext, id: string): HTMLElement {
     'main',
     { class: 'view' },
     backButton(ctx),
-    h('header', null, h('h1', null, exercise.name), h('p', { class: 'muted' }, `${describeDose(exercise)} · ${formatDays(exercise.days)}`)),
+    h('header', null, h('h1', null, exercise.name), h('p', { class: 'muted' }, exerciseMeta(ctx, exercise))),
     exercise.needsConfirmation
       ? h('p', { class: 'badge badge-warn' }, 'Doseringen står ikke på sedlen. Bekræft med Nicky og ret under "Redigér".')
       : null,
@@ -212,6 +239,7 @@ function videoElement(item: MediaItem, url: string, urls: string[], isDisposed: 
 }
 
 function exerciseForm(ctx: ViewContext, exercise: Exercise, original: Exercise | undefined, isNew = false): HTMLElement {
+  const weekly = ctx.store.get().program.timesPerWeek !== undefined;
   const num = (name: string, label: string, value: number | undefined, min: number, max: number): HTMLElement =>
     h(
       'label',
@@ -229,7 +257,7 @@ function exerciseForm(ctx: ViewContext, exercise: Exercise, original: Exercise |
         const data = new FormData(ev.target as HTMLFormElement);
         const n = (k: string): number => Number(data.get(k));
         const category = data.get('category') === 'stretch' ? 'stretch' : 'strength';
-        const days = data.getAll('days').map(Number) as Weekday[];
+        const days = weekly ? exercise.days : (data.getAll('days').map(Number) as Weekday[]);
         const next: Exercise = {
           id: exercise.id,
           name: String(data.get('name') ?? '').trim(),
@@ -288,18 +316,20 @@ function exerciseForm(ctx: ViewContext, exercise: Exercise, original: Exercise |
       num('holdSeconds', 'Hold (sek)', exercise.holdSeconds ?? 30, 1, 600),
     ),
     h('label', { class: 'check' }, h('input', { type: 'checkbox', name: 'perSide', checked: exercise.perSide }), 'Både højre og venstre side'),
-    h(
-      'fieldset',
-      { class: 'field' },
-      h('legend', { class: 'label' }, 'Dage'),
-      h(
-        'div',
-        { class: 'days' },
-        WEEKDAY_SHORT.map((d, i) =>
-          h('label', { class: 'day-toggle' }, h('input', { type: 'checkbox', name: 'days', value: i, checked: exercise.days.includes(i as Weekday) }), h('span', null, d)),
+    weekly
+      ? null
+      : h(
+          'fieldset',
+          { class: 'field' },
+          h('legend', { class: 'label' }, 'Dage'),
+          h(
+            'div',
+            { class: 'days' },
+            WEEKDAY_SHORT.map((d, i) =>
+              h('label', { class: 'day-toggle' }, h('input', { type: 'checkbox', name: 'days', value: i, checked: exercise.days.includes(i as Weekday) }), h('span', null, d)),
+            ),
+          ),
         ),
-      ),
-    ),
     h(
       'label',
       { class: 'field' },

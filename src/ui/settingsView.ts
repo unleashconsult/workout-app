@@ -1,9 +1,7 @@
 import { dateKey } from '../domain/dates';
-import { buildIcs, reminderGroups } from '../domain/ics';
 import { createInitialState, parseState } from '../domain/validate';
 import type { ViewContext } from './context';
-import { downloadBlob, h, saveFile, toast } from './dom';
-import { formatDays } from './programView';
+import { h, saveFile, toast } from './dom';
 import { ScreenWakeLock } from './wakeLock';
 
 export function isStandalone(): boolean {
@@ -15,14 +13,6 @@ export function isStandalone(): boolean {
 
 export function settingsView(ctx: ViewContext): HTMLElement {
   const state = ctx.store.get();
-  const appUrl = new URL('./', location.href).href;
-  const groups = reminderGroups(state.program);
-
-  const addToCalendar = (): void => {
-    const ics = buildIcs(state.program, { reminderTime: state.settings.reminderTime, appUrl, now: ctx.now() });
-    // Direkte download åbner iOS' "Tilføj til kalender"-dialog. Delingsarket gør ikke.
-    downloadBlob('skulder-paamindelser.ics', new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
-  };
 
   const exportBackup = async (): Promise<void> => {
     try {
@@ -67,36 +57,9 @@ export function settingsView(ctx: ViewContext): HTMLElement {
     h(
       'section',
       { class: 'card' },
-      h('h2', { class: 'card-title' }, 'Påmindelser'),
-      h('p', { class: 'muted' }, 'Påmindelserne lægges i din iPhone-kalender som gentagende begivenheder med alarm. De virker også når appen er lukket.'),
-      h(
-        'label',
-        { class: 'field' },
-        h('span', { class: 'label' }, 'Tidspunkt'),
-        h('input', {
-          class: 'input',
-          type: 'time',
-          value: state.settings.reminderTime,
-          onchange: (ev: Event) => {
-            const value = (ev.target as HTMLInputElement).value;
-            if (/^\d{2}:\d{2}$/.test(value)) ctx.store.update((s) => void (s.settings.reminderTime = value));
-          },
-        }),
-      ),
-      h(
-        'ul',
-        { class: 'reminder-list' },
-        groups.map((g) =>
-          h(
-            'li',
-            null,
-            h('strong', null, formatDays(g.days)),
-            h('span', { class: 'muted' }, ` · ${g.exercises.some((e) => e.category === 'strength') ? 'stræk + styrke' : 'stræk'}`),
-          ),
-        ),
-      ),
-      h('button', { class: 'btn btn-primary btn-block', type: 'button', onclick: addToCalendar }, '📅 Tilføj påmindelser til kalender'),
-      h('p', { class: 'muted small' }, 'Ændrer du tidspunkt eller dage: slet de gamle begivenheder i Kalender og tilføj igen. Åbner kalenderen ikke fra hjemmeskærms-appen, så gør det fra Safari.'),
+      h('h2', { class: 'card-title' }, 'Påmindelse'),
+      h('p', { class: 'muted' }, 'Holdtræning giver typisk 2 af ugens træninger. Sæt én påmindelse til den 3. Sig til Siri:'),
+      h('p', { class: 'quote' }, '"Mind mig om skuldertræning hver lørdag klokken 10"'),
     ),
     h(
       'section',

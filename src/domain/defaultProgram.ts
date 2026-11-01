@@ -1,7 +1,7 @@
 import type { Program, Weekday } from './types';
 
 /** Hæves når programmet ændres, så eksisterende installationer opdateres (se programUpdates.ts). */
-export const PROGRAM_REVISION = 6;
+export const PROGRAM_REVISION = 7;
 
 /** Seddel: "2–3 x ugentlig". Gælder både stræk og styrke. Mandag, onsdag, fredag som udgangspunkt. */
 const TRAINING_DAYS: Weekday[] = [0, 2, 4];
@@ -18,6 +18,8 @@ export const DEFAULT_PROGRAM: Program = {
     'Træn de muskler der skal bruges til korrekt bevægelse',
     'Muskelstyrke',
   ],
+  // Seddel: "2–3 x ugentlig". Fleksible dage, da træningen følger holdtræning.
+  timesPerWeek: 3,
   exercises: [
     {
       id: 'stretch-overhead',

@@ -16,7 +16,7 @@ function fail(path: string): never {
   throw new ValidationError(`Ugyldige data: ${path}`);
 }
 
-export const DEFAULT_SETTINGS: Settings = { reminderTime: '18:00', soundEnabled: true, keepScreenOn: true };
+export const DEFAULT_SETTINGS: Settings = { soundEnabled: true, keepScreenOn: true };
 
 export function createInitialState(today: Date = new Date()): AppState {
   return {
@@ -63,14 +63,21 @@ function parseExercise(v: unknown, path: string): Exercise {
 
 function parseProgram(v: unknown): Program {
   if (!isObj(v)) fail('program');
-  const { title, coach, principles, exercises } = v;
+  const { title, coach, principles, exercises, timesPerWeek } = v;
   if (!isStr(title, 120)) fail('program.title');
   if (!isStr(coach, 120)) fail('program.coach');
   if (!Array.isArray(principles) || !principles.every((p) => isStr(p))) fail('program.principles');
   if (!Array.isArray(exercises) || exercises.length > 50) fail('program.exercises');
   const parsed = exercises.map((e, i) => parseExercise(e, `program.exercises[${i}]`));
   if (new Set(parsed.map((e) => e.id)).size !== parsed.length) fail('program.exercises (dubletter)');
-  return { title, coach, principles: [...(principles as string[])], exercises: parsed };
+  if (timesPerWeek !== undefined && !isInt(timesPerWeek, 1, 7)) fail('program.timesPerWeek');
+  return {
+    title,
+    coach,
+    principles: [...(principles as string[])],
+    exercises: parsed,
+    ...(timesPerWeek !== undefined ? { timesPerWeek } : {}),
+  };
 }
 
 function parseDayLog(v: unknown, path: string): DayLog {
@@ -94,13 +101,9 @@ function parseDayLog(v: unknown, path: string): DayLog {
 
 function parseSettings(v: unknown): Settings {
   if (!isObj(v)) return { ...DEFAULT_SETTINGS };
-  const reminderTime =
-    isStr(v.reminderTime, 5) && /^([01]\d|2[0-3]):[0-5]\d$/.test(v.reminderTime)
-      ? v.reminderTime
-      : DEFAULT_SETTINGS.reminderTime;
   const soundEnabled = typeof v.soundEnabled === 'boolean' ? v.soundEnabled : DEFAULT_SETTINGS.soundEnabled;
   const keepScreenOn = typeof v.keepScreenOn === 'boolean' ? v.keepScreenOn : DEFAULT_SETTINGS.keepScreenOn;
-  return { reminderTime, soundEnabled, keepScreenOn };
+  return { soundEnabled, keepScreenOn };
 }
 
 /** Migrerer ældre skemaversioner. Udvides når SCHEMA_VERSION hæves. */

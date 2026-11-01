@@ -1,5 +1,6 @@
 import { addDays, dateKey, startOfWeek, WEEKDAY_SHORT } from '../domain/dates';
-import { adherence, currentStreak, dayProgress } from '../domain/progress';
+import { adherence, currentStreak, dayProgress, isWeeklyMode, weekStatus, weekStreak, weeklyAdherence } from '../domain/progress';
+import type { AppState } from '../domain/types';
 import type { ViewContext } from './context';
 import { h, ring } from './dom';
 
@@ -10,19 +11,24 @@ export function historyView(ctx: ViewContext): HTMLElement {
   const today = ctx.now();
   const todayKey = dateKey(today);
   const firstWeek = addDays(startOfWeek(today), -7 * (WEEKS - 1));
+  const weekly = isWeeklyMode(state.program);
 
   const weeks = Array.from({ length: WEEKS }, (_, w) => {
     const monday = addDays(firstWeek, w * 7);
+    const week = weekStatus(state, monday);
+    const started = dateKey(addDays(monday, 6)) >= state.startedOn;
     return h(
       'div',
-      { class: 'week-row' },
+      { class: `week-row${weekly ? ' week-row-weekly' : ''}` },
       h('div', { class: 'week-label muted' }, `Uge ${isoWeek(monday)}`),
       Array.from({ length: 7 }, (_, d) => {
         const date = addDays(monday, d);
         const key = dateKey(date);
         const future = key > todayKey;
         const p = dayProgress(state, date);
-        const status = future || p.planned === 0 ? 'none' : p.complete ? 'done' : p.done > 0 ? 'partial' : key === todayKey ? 'none' : 'missed';
+        // Med ugemål er en dag uden træning ikke "mistet"; kun ugen kan misses.
+        const missed = weekly ? 'none' : key === todayKey ? 'none' : 'missed';
+        const status = future || p.planned === 0 ? 'none' : p.complete ? 'done' : p.done > 0 ? 'partial' : missed;
         return h(
           'button',
           {
@@ -34,6 +40,13 @@ export function historyView(ctx: ViewContext): HTMLElement {
           h('span', null, String(date.getDate())),
         );
       }),
+      weekly
+        ? h(
+            'div',
+            { class: `week-count${week.reached ? ' week-reached' : ''}` },
+            started && dateKey(monday) <= todayKey ? `${week.sessions}/${week.target}` : '',
+          )
+        : null,
     );
   });
 
@@ -47,24 +60,24 @@ export function historyView(ctx: ViewContext): HTMLElement {
     'main',
     { class: 'view' },
     h('header', null, h('h1', null, 'Overblik')),
-    h(
-      'div',
-      { class: 'stats' },
-      stat('Dage i træk', String(currentStreak(state, today))),
-      stat('Seneste 7 dage', pct(adherence(state, today, 7)), adherence(state, today, 7)),
-      stat('Seneste 28 dage', pct(adherence(state, today, 28)), adherence(state, today, 28)),
-    ),
+    weekly ? weeklyStats(state, today) : dailyStats(state, today),
     h(
       'section',
       { class: 'card' },
-      h('div', { class: 'week-row week-head' }, h('div', null), WEEKDAY_SHORT.map((d) => h('div', { class: 'muted' }, d))),
+      h(
+        'div',
+        { class: `week-row week-head${weekly ? ' week-row-weekly' : ''}` },
+        h('div', null),
+        WEEKDAY_SHORT.map((d) => h('div', { class: 'muted' }, d)),
+        weekly ? h('div', { class: 'muted' }, 'Mål') : null,
+      ),
       weeks,
       h(
         'div',
         { class: 'legend muted' },
         h('span', null, h('i', { class: 'dot day-done' }), 'Klaret'),
         h('span', null, h('i', { class: 'dot day-partial' }), 'Delvist'),
-        h('span', null, h('i', { class: 'dot day-missed' }), 'Mistet'),
+        weekly ? null : h('span', null, h('i', { class: 'dot day-missed' }), 'Mistet'),
       ),
     ),
     h(
@@ -106,6 +119,28 @@ export function historyView(ctx: ViewContext): HTMLElement {
           ),
         )
       : null,
+  );
+}
+
+function dailyStats(state: AppState, today: Date): HTMLElement {
+  return h(
+    'div',
+    { class: 'stats' },
+    stat('Dage i træk', String(currentStreak(state, today))),
+    stat('Seneste 7 dage', pct(adherence(state, today, 7)), adherence(state, today, 7)),
+    stat('Seneste 28 dage', pct(adherence(state, today, 28)), adherence(state, today, 28)),
+  );
+}
+
+function weeklyStats(state: AppState, today: Date): HTMLElement {
+  const week = weekStatus(state, today);
+  const last4 = weeklyAdherence(state, today, 4);
+  return h(
+    'div',
+    { class: 'stats' },
+    stat('Uger i træk', String(weekStreak(state, today))),
+    stat('Denne uge', `${week.sessions}/${week.target}`, Math.min(1, week.sessions / week.target)),
+    stat('Seneste 4 uger', last4 === null ? '–' : pct(last4), last4 ?? undefined),
   );
 }
 
