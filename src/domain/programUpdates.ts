@@ -40,6 +40,11 @@ const UPDATES: ProgramUpdate[] = [
         ? { ...e, minSets: 2, needsConfirmation: false }
         : null,
   },
+  {
+    // Stræk laves 2–3 gange om ugen sammen med styrke, ikke hver dag.
+    revision: 6,
+    apply: (e) => (STRETCH_IDS.has(e.id) && e.days.length === 7 ? { ...e, days: [0, 2, 4] } : null),
+  },
 ];
 
 export function applyProgramUpdates(state: AppState): AppState {

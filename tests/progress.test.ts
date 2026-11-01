@@ -44,9 +44,9 @@ describe('program fra Nickys seddel', () => {
     expect(e.days).toEqual([0, 2, 4]);
   });
 
-  it('stræk hver dag, styrke kun på styrkedage', () => {
-    expect(exercisesForDate(state.program, MONDAY).map((e) => e.category)).toContain('strength');
-    expect(exercisesForDate(state.program, TUESDAY).every((e) => e.category === 'stretch')).toBe(true);
+  it('stræk og styrke 3 gange om ugen, ingen øvelser på hviledage', () => {
+    expect(exercisesForDate(state.program, MONDAY)).toHaveLength(4);
+    expect(exercisesForDate(state.program, TUESDAY)).toHaveLength(0);
   });
 });
 
@@ -81,18 +81,20 @@ describe('fremskridt', () => {
 
   it('stribe tæller fuldførte dage og bryder ikke på en igangværende dag', () => {
     const state = createInitialState(START);
-    const today = addDays(MONDAY, 3);
-    for (let i = 1; i <= 3; i++) completeDay(state, addDays(today, -i));
-    expect(currentStreak(state, today)).toBe(3);
+    // Fredag: man og ons klaret, fredag i gang. Hviledage springes over.
+    const today = addDays(MONDAY, 4);
+    completeDay(state, MONDAY);
+    completeDay(state, addDays(MONDAY, 2));
+    expect(currentStreak(state, today)).toBe(2);
     completeDay(state, today);
-    expect(currentStreak(state, today)).toBe(4);
+    expect(currentStreak(state, today)).toBe(3);
   });
 
   it('stribe brydes af en mistet dag', () => {
     const state = createInitialState(START);
-    const today = addDays(MONDAY, 3);
-    completeDay(state, addDays(today, -1));
-    completeDay(state, addDays(today, -3));
+    // Fredag: onsdag klaret, mandag mistet.
+    const today = addDays(MONDAY, 4);
+    completeDay(state, addDays(MONDAY, 2));
     expect(currentStreak(state, today)).toBe(1);
   });
 
