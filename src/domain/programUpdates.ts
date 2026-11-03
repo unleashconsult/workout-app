@@ -11,6 +11,14 @@ interface ProgramUpdate {
 
 const STRETCH_IDS = new Set(['stretch-overhead', 'stretch-chest']);
 
+const ROTATOR_CUFF_V1_FIRST_CUE = 'Elastikken fastgjort i albuehøjde ved siden af dig.';
+const ROTATOR_CUFF_CUES = [
+  'Elastikken i begge hænder. Begge arme arbejder samtidig.',
+  'Albuerne ind til siden, underarmene vandret, 90° i albuerne.',
+  'Drej underarmene udad uden at albuerne slipper kroppen.',
+  'Mærk det bag på skulderen. Langsomt tilbage.',
+];
+
 const UPDATES: ProgramUpdate[] = [
   {
     // Stræk holdes 2 minutter pr. side, ikke 2 × 45 sek.
@@ -51,6 +59,18 @@ const UPDATES: ProgramUpdate[] = [
     // Ugemål i stedet for faste dage: 3 træninger om ugen, uanset hvilke dage.
     revision: 7,
     applyProgram: (p) => (p.timesPerWeek === undefined ? { ...p, timesPerWeek: 3 } : p),
+  },
+  {
+    // Rotator cuff laves med begge arme samtidig ("H+V" på sedlen), så sæt deles ikke op i sider.
+    revision: 8,
+    apply: (e) =>
+      e.id === 'rotator-cuff-er' && e.perSide
+        ? {
+            ...e,
+            perSide: false,
+            cues: e.cues[0] === ROTATOR_CUFF_V1_FIRST_CUE ? [...ROTATOR_CUFF_CUES] : e.cues,
+          }
+        : null,
   },
 ];
 
