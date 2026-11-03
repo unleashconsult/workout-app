@@ -48,11 +48,11 @@ describe('program fra Nickys seddel', () => {
   const state = createInitialState(START);
   const byId = (id: string) => state.program.exercises.find((e) => e.id === id)!;
 
-  it('rotator cuff: 3 sæt × 8 reps, begge arme samtidig, 90 sek pause', () => {
+  it('rotator cuff: 3 sæt × 8 reps, højre og venstre, 90 sek pause', () => {
     const e = byId('rotator-cuff-er');
-    expect(describeDose(e)).toBe('3 sæt × 8 reps');
+    expect(describeDose(e)).toBe('3 sæt × 8 reps pr. side');
     expect(e.restSeconds).toBe(90);
-    expect(unitsFor(e)).toBe(3);
+    expect(unitsFor(e)).toBe(6);
   });
 
   it('lower traps: 10–12 reps, 2 min pause, 3 gange om ugen', () => {
@@ -101,7 +101,7 @@ describe('fremskridt', () => {
   it('ignorerer for mange afkrydsninger', () => {
     const state = createInitialState(START);
     state.log[dateKey(MONDAY)] = { done: { 'rotator-cuff-er': 99 } };
-    expect(dayProgress(state, MONDAY).done).toBe(3);
+    expect(dayProgress(state, MONDAY).done).toBe(6);
   });
 
   it('stribe tæller fuldførte dage og bryder ikke på en igangværende dag', () => {

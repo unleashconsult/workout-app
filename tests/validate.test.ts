@@ -73,7 +73,7 @@ describe('programopdateringer', () => {
     const byId = (id: string) => state.program.exercises.find((e) => e.id === id)!;
     expect(byId('stretch-overhead')).toMatchObject({ sets: 1, holdSeconds: 120, needsConfirmation: false });
     expect(byId('stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 60, needsConfirmation: true });
-    expect(state.programRevision).toBe(8);
+    expect(state.programRevision).toBe(9);
   });
 
   it('retter bryststræk tilbage på installationer der fik revision 2', () => {
@@ -140,14 +140,22 @@ describe('ugemål opdatering', () => {
 });
 
 describe('rotator cuff opdatering', () => {
-  it('slår sider sammen og opdaterer uændrede instruktioner', () => {
+  const withCuff = (rev: number, cuff: Record<string, unknown>) => {
     const raw = createInitialState() as unknown as Record<string, unknown> & { program: { exercises: Array<Record<string, unknown>> } };
-    raw.programRevision = 7;
-    const cuff = raw.program.exercises.find((e) => e.id === 'rotator-cuff-er')!;
-    Object.assign(cuff, { perSide: true, cues: ['Elastikken fastgjort i albuehøjde ved siden af dig.', 'x'] });
-    const state = parseState(JSON.parse(JSON.stringify(raw)));
-    const e = state.program.exercises.find((x) => x.id === 'rotator-cuff-er')!;
-    expect(e.perSide).toBe(false);
-    expect(e.cues[0]).toMatch(/begge hænder/);
+    raw.programRevision = rev;
+    Object.assign(raw.program.exercises.find((e) => e.id === 'rotator-cuff-er')!, cuff);
+    return parseState(JSON.parse(JSON.stringify(raw))).program.exercises.find((x) => x.id === 'rotator-cuff-er')!;
+  };
+
+  it('installationer der fik revision 8 får højre/venstre og de oprindelige instruktioner tilbage', () => {
+    const e = withCuff(8, { perSide: false, cues: ['Elastikken i begge hænder. Begge arme arbejder samtidig.', 'x'] });
+    expect(e.perSide).toBe(true);
+    expect(e.cues[0]).toBe('Elastikken fastgjort i albuehøjde ved siden af dig.');
+  });
+
+  it('ældre installationer ender uændret med højre/venstre', () => {
+    const e = withCuff(7, { perSide: true });
+    expect(e.perSide).toBe(true);
+    expect(e.cues[0]).toBe('Elastikken fastgjort i albuehøjde ved siden af dig.');
   });
 });
