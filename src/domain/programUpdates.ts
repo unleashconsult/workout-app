@@ -11,7 +11,13 @@ interface ProgramUpdate {
 
 const STRETCH_IDS = new Set(['stretch-overhead', 'stretch-chest']);
 
-const ROTATOR_CUFF_V1_FIRST_CUE = 'Elastikken fastgjort i albuehøjde ved siden af dig.';
+const ROTATOR_CUFF_V1_CUES = [
+  'Elastikken fastgjort i albuehøjde ved siden af dig.',
+  'Albuen ind til siden, underarmen vandret, 90° i albuen.',
+  'Drej underarmen udad uden at albuen slipper kroppen.',
+  'Mærk det bag på skulderen. Langsomt tilbage.',
+];
+const ROTATOR_CUFF_V1_FIRST_CUE = ROTATOR_CUFF_V1_CUES[0];
 const ROTATOR_CUFF_CUES = [
   'Elastikken i begge hænder. Begge arme arbejder samtidig.',
   'Albuerne ind til siden, underarmene vandret, 90° i albuerne.',
@@ -69,6 +75,18 @@ const UPDATES: ProgramUpdate[] = [
             ...e,
             perSide: false,
             cues: e.cues[0] === ROTATOR_CUFF_V1_FIRST_CUE ? [...ROTATOR_CUFF_CUES] : e.cues,
+          }
+        : null,
+  },
+  {
+    // Fortrudt: rotator cuff laves én side ad gangen (højre og venstre), som før revision 8.
+    revision: 9,
+    apply: (e) =>
+      e.id === 'rotator-cuff-er' && !e.perSide
+        ? {
+            ...e,
+            perSide: true,
+            cues: e.cues[0] === ROTATOR_CUFF_CUES[0] ? [...ROTATOR_CUFF_V1_CUES] : e.cues,
           }
         : null,
   },

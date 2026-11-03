@@ -1,7 +1,7 @@
 import type { Program, Weekday } from './types';
 
 /** Hæves når programmet ændres, så eksisterende installationer opdateres (se programUpdates.ts). */
-export const PROGRAM_REVISION = 8;
+export const PROGRAM_REVISION = 9;
 
 /** Seddel: "2–3 x ugentlig". Gælder både stræk og styrke. Mandag, onsdag, fredag som udgangspunkt. */
 const TRAINING_DAYS: Weekday[] = [0, 2, 4];
@@ -79,13 +79,13 @@ export const DEFAULT_PROGRAM: Program = {
       category: 'strength',
       sets: 3,
       reps: { min: 8, max: 8 },
-      perSide: false,
+      perSide: true,
       restSeconds: 90,
       days: TRAINING_DAYS,
       cues: [
-        'Elastikken i begge hænder. Begge arme arbejder samtidig.',
-        'Albuerne ind til siden, underarmene vandret, 90° i albuerne.',
-        'Drej underarmene udad uden at albuerne slipper kroppen.',
+        'Elastikken fastgjort i albuehøjde ved siden af dig.',
+        'Albuen ind til siden, underarmen vandret, 90° i albuen.',
+        'Drej underarmen udad uden at albuen slipper kroppen.',
         'Mærk det bag på skulderen. Langsomt tilbage.',
       ],
       needsConfirmation: false,
