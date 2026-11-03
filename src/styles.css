@@ -57,6 +57,15 @@ body {
   font: 16px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+  /* App-UI: langt tryk må ikke markere tekst eller åbne iOS' tekstmenu. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input, textarea, .selectable {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 button, input, select, textarea { font: inherit; color: inherit; }

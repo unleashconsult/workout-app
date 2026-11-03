@@ -73,7 +73,7 @@ describe('programopdateringer', () => {
     const byId = (id: string) => state.program.exercises.find((e) => e.id === id)!;
     expect(byId('stretch-overhead')).toMatchObject({ sets: 1, holdSeconds: 120, needsConfirmation: false });
     expect(byId('stretch-chest')).toMatchObject({ sets: 2, holdSeconds: 60, needsConfirmation: true });
-    expect(state.programRevision).toBe(7);
+    expect(state.programRevision).toBe(8);
   });
 
   it('retter bryststræk tilbage på installationer der fik revision 2', () => {
@@ -136,5 +136,18 @@ describe('ugemål opdatering', () => {
     const raw = createInitialState() as unknown as { program: Record<string, unknown> };
     raw.program.timesPerWeek = 9;
     expect(() => parseState(raw)).toThrow(ValidationError);
+  });
+});
+
+describe('rotator cuff opdatering', () => {
+  it('slår sider sammen og opdaterer uændrede instruktioner', () => {
+    const raw = createInitialState() as unknown as Record<string, unknown> & { program: { exercises: Array<Record<string, unknown>> } };
+    raw.programRevision = 7;
+    const cuff = raw.program.exercises.find((e) => e.id === 'rotator-cuff-er')!;
+    Object.assign(cuff, { perSide: true, cues: ['Elastikken fastgjort i albuehøjde ved siden af dig.', 'x'] });
+    const state = parseState(JSON.parse(JSON.stringify(raw)));
+    const e = state.program.exercises.find((x) => x.id === 'rotator-cuff-er')!;
+    expect(e.perSide).toBe(false);
+    expect(e.cues[0]).toMatch(/begge hænder/);
   });
 });
